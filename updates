@@ -1,0 +1,15 @@
+supContSQL =  "SELECT " &_
+                      "    GROUP_CONCAT(c.Vendor_Id) AS Vendor_Id " &_
+                      "  , c.Contact_Name " &_
+                      "  , c.Office_Phone " &_
+                      "  , c.Office_Phone_Ext " &_
+                      "  , c.Mobile_Nbr " &_
+                      "  , c.Fax_Nbr " &_
+                      "  , c.Email_Addr " &_
+                      "  , c.SC_Contact " &_
+                      "  , c.Quality_Contact " &_
+                      "  , c.Auto_Emails " &_
+                      "  , c.Active " &_
+                      "FROM ct_Supplier_Contacts c (NOLOCK)  " &_
+                      "WHERE c.Vendor_Id LIKE '%" & SearchTerms & "%' " &_
+                      "GROUP BY c.Contact_Name , c.Office_Phone, c.Office_Phone_Ext, c.Mobile_Nbr, c.Fax_Nbr, c.Email_Addr, c.SC_Contact , c.Quality_Contact, c.Auto_Emails, c.Active" 
