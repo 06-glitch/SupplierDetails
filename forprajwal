@@ -1,0 +1,57 @@
+IF SearchBucket = "SupplierName" THEN
+        supIdSQL =  "SELECT " &_
+                    "    d.Vendor_Id " &_
+                    "  , d.Vendor_Name " &_
+                    "  , d.eSMI_Flag " &_
+                    "  , d.Auto_Email " &_
+                    "  , d.New_PO_Email " &_
+                    "  , d.Mid_LT_Email " &_
+                    "  , d.Approaching_Due_Email " &_
+                    "  , d.Past_Due_Email " &_
+                    "FROM ct_Supplier_Details d (NOLOCK) " &_
+                    "WHERE d.Vendor_Name LIKE '%" & SearchTerms & "%' " 
+
+        rs.Open supIdSQL,conn
+        flds = rs.Fields.Count
+        rs.MOVEFIRST()
+        %>
+          <div id="Suppliers">
+            <div id="SupplierInfo">
+              <table>
+                <tr>
+                  <th>Supplier Id</th>
+                  <th>Suplier Name</th>
+                  <th style="word-wrap: break-word; max-width:35px;">eSMI Flag</th>
+                  <th style="word-wrap: break-word; max-width:40px;">Auto Email</th>
+                  <th style="word-wrap: break-word; max-width:45px;">New PO Email</th>
+                  <th style="word-wrap: break-word; max-width:45px;">Mid LT Email</th>
+                  <th style="word-wrap: break-word; max-width:90px;">Approaching Due Date Email</th>
+                  <th style="word-wrap: break-word; max-width:40px;">Past Due Email</th>
+                  <th>Select</th>
+                </tr>
+                <%
+                  k = 0
+                  k = k + 1
+                  DO WHILE NOT rs.eof
+                    RESPONSE.WRITE("<tr>")
+                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Vendor_Id").value & "</td>")
+                      RESPONSE.WRITE("<td id='SupplierName" & k & "'>" & rs.fields("Vendor_Name").value & "</td>")
+                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("eSMI_Flag").value & "</td>")
+                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Auto_Email").value & "</td>")
+                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("New_PO_Email").value & "</td>")
+                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Mid_LT_Email").value & "</td>")
+                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Approaching_Due_Email").value & "</td>")
+                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Past_Due_Email").value & "</td>")
+                      %>
+                        <td>
+                          <button class="submitbtn" id='SupplierSelect' onclick="SelectSupplierInfo('<%RESPONSE.WRITE(k)%>')" value="Select">Select</button>
+                        </td>
+                      <%
+                    RESPONSE.WRITE("</tr>")
+                    k = k + 1
+                    rs.MOVENEXT
+                  LOOP
+                %>
+              </table>
+            </div>
+          </div>
