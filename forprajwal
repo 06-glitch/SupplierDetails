@@ -1,652 +1,460 @@
-<!DOCTYPE html>
-<%@ Language=VBScript %>
-<html>
-  <meta charset="utf-8" http-equiv="X-UA-Compatible" content="IE=Edge" />
-	<head>
-		<!--#INCLUDE FILE="./SharedCode/SharedCode.asp"-->
-		<!--#INCLUDE FILE="./SharedCode/aspConstants.asp"-->
-		<!--#INCLUDE FILE="./SharedCode/StylesCompat.asp"-->
-		<!--#INCLUDE FILE="./SharedCode/Javascript_Code.asp"-->
-		<!--#INCLUDE FILE="./SharedCode/JavascriptCodeTrue.asp"-->  
-    <!--#INCLUDE FILE="./SharedCode/FunctionsCompat.asp"-->
-     <%Server.ScriptTimeout=10%>
-       <title>Supplier Details Update Screen</title>
-	</head>
-	<body>
-		<%
-			'*********************************************************************************************************
-			'************   CONNECTION STRING & DB INFO   ************************************************************
-			'************   MUST KEEP CONNECTION STRING SETTINGS IN THIS CODE & NOT SharedCode.asp  ******************
-			'************   OR IT WILL NOT WORK!!!    ****************************************************************
-			'************   CONNECTION PASSWORD IS CONTAINED IN SharedCode.asp UNDER THE FUNCTION myPassword()  ******
-			'*********************************************************************************************************
+<%
+
+FUNCTION PageName()
+	url = Request.ServerVariables("URL")
+	iLastSlash = InStrRev(url, "/")
+	iScriptLength = Len(url)
+	sScriptName = Right(url, iScriptLength - iLastSlash)
+
+	PageName = sScriptName
+END FUNCTION
+
+Function myPassword()
+  myPassword="newnrednov@2023Q4"
+End Function
+
+Function myUserName()
+	myUserName = "Reddog_System"
+END FUNCTION
+
+FUNCTION myServer(useTestDB)
+	IF useTestDB = "Y" THEN 
+		myServer 	= "QASQL213A\SQL213A"
+	ELSE
+		myServer 	= "usctdb2\sql2"
+	END IF
+END FUNCTION
+
+FUNCTION myCatalog(useTestDB)
+	IF useTestDB = "Y" THEN
+    myCatalog  = "PMCS_TESTMZ"
+	ELSE
+		myCatalog	= "PMCSMZ"
+	END IF
+END FUNCTION
+
+Function GetUserPin()
+if mid(Request.ServerVariables("LOGON_USER"),5,1) & "" = "\" then
+	if mid(Request.ServerVariables("LOGON_USER"),6,10) & "" = "" then
+		if mid(Request.ServerVariables("Remote_User"),6,10) & "" = "" then
+			Response.Status = "401 Authenticate"
+			Response.End
+		else
+			strLogin = mid(Request.ServerVariables("Remote_User"),6,10)
+		end if
+	else
+		strLogin = mid(Request.ServerVariables("LOGON_USER"),6,10)
+	end if
+else
+	if mid(Request.ServerVariables("LOGON_USER"),5,10) & "" = "" then
+		if mid(Request.ServerVariables("Remote_User"),5,10) & "" = "" then
+			Response.Status = "401 Authenticate"
+			Response.End
+		else
+			strLogin = mid(Request.ServerVariables("Remote_User"),5,10)
+		end if
+	else
+		strLogin = mid(Request.ServerVariables("LOGON_USER"),5,10)
+	end if
+end if
+GetUserPin = ucase(strLogin)
+End Function 
+
+sub OpenDB(rs,conn,strCatalog)
+    strCatalog = "PMCSMZ"
+    Set Conn = Server.CreateObject("ADODB.Connection")
+    Conn.Open "Provider=SQLOLEDB.1; Data Source=usctdb2\sql2; Initial Catalog=" & strCatalog & ";Network Library=DBMSSOCN;Persist Security Info=True;","Reddog_System",myPassword()
+    set cmd = Server.CreateObject("ADODB.Command")
+    set cmd.ActiveConnection = Conn
+	  set rs   = Server.CreateObject("ADODB.Recordset")
+end sub
+
+sub CloseDB(rs,conn)
+'   rs.close
+	conn.close
+	set rs = nothing
+	set conn = nothing
+end sub
+
+Sub BuildHeader(strArea, strTitle2, strImage)
+	dtStart = now()
+	Response.Write ( "<table width=100% border=0 cellspacing=0 bgcolor=white >" & vbCRLF )
+	Response.Write ( "  <tr  >" & vbCRLF )
+	Response.Write ( "    <th width=100% height=30px class=PageTitle >&nbsp;</th>" & vbCRLF )
+	Response.Write ( "  </tr>" & vbCRLF )
+	Response.Write ( "  <tr>" & vbCRLF )
+	Response.Write ( "    <th width=100% colspan=3 height=18px bgcolor=#226C9B></th>" & vbCRLF )
+	Response.Write ( "  </tr>" & vbCRLF )
+	Response.Write ( "  <tr>" & vbCRLF )
+	Response.Write ( "    <th width=100% colspan=3 height=6px bgcolor=#FF0000></th>" & vbCRLF )
+	Response.Write ( "  </tr></table>" & vbCRLF )
+'	Response.Write ( "  <span id='3MLogo' style='position:absolute;left:5;top:6;'><image src='http://usctap11/MZVisualBoards/Images/3MLogoSCS.gif'></span> " & vbCRLF )
+	Response.Write ( "  <span id='3MLogo' style='position:absolute;left:10;top:6;'><image src=" & strImage & "></span> " & vbCRLF )
+	Response.Write ( "  <span id='HeaderTitle' style='position:absolute;left:175;top:12;' class=PageTitle>" & strArea & "</span> " & vbCRLF )
+	Response.Write ( "  <span id='HeaderTitle' style='position:absolute;right:2%;top:12;font-size:3em;' class=PageTitle>" &strTitle2 & "</span> " & vbCRLF )
+	'Response.Write ( "<span id ='Comment' style='position:absolute;left:1%;top:64;' class=MenuTitle>" & "Test!" & "</span> " & vbCRLF )
+	Response.Write ( "  <span id='MainMenu' style='position:absolute;right:20%;top:64;' class=MenuTitle><a class='menuitem' href='http://usctap11/MZvisualboards/MZMainMenu.asp' target='_top'>  >>Main Menu</a></span> " & vbCRLF )
+	Response.Write ( "  <span id='Time' style='position:absolute;right:2%;top:64;' class=MenuTitle>" & now())
+	Response.Write ( "</span> " & vbCRLF )
+End Sub
+
+Sub BuildHeader2(strArea, strTitle2, strImage)
+	dtStart = now()
+	Response.Write ( "<table width=100% border=0 cellspacing=0 bgcolor=white >" & vbCRLF )
+	Response.Write ( "  <tr  >" & vbCRLF )
+	Response.Write ( "    <th width=100% height=30px class=PageTitle >&nbsp;</th>" & vbCRLF )
+	Response.Write ( "  </tr>" & vbCRLF )
+	Response.Write ( "  <tr>" & vbCRLF )
+	Response.Write ( "    <th colspan=3 height=18px bgcolor=#226C9B></th>" & vbCRLF )
+	Response.Write ( "  </tr>" & vbCRLF )
+	Response.Write ( "  <tr>" & vbCRLF )
+	Response.Write ( "    <th colspan=3 height=6px bgcolor=#FF0000></th>" & vbCRLF )
+	Response.Write ( "  </tr>" & vbCRLF )
+	Response.Write ( "  <span id='Logo2' style='position:absolute;left:10;'><image src=" & strImage & "></span> " & vbCRLF )
+	Response.Write ( "  <span id='HeaderTitle2' style='position:absolute;left:175;' class=PageTitle>" & strArea & "</span> " & vbCRLF )
+	Response.Write ( "  <span id='HeaderTitle' style='position:absolute;right:2%;' class=PageTitle>" &strTitle2 & "</span> " & vbCRLF )
+End Sub
+
+Function BuildHeader_Reports(strArea, strTitle2, strImage)
+	dtStart = now()
+	Response.Write ( "<table width=100% border=0 cellspacing=0 bgcolor=white >" & vbCRLF )
+	Response.Write ( "  <tr  >" & vbCRLF )
+	Response.Write ( "    <th width=100% height=30px class=PageTitle >&nbsp;</th>" & vbCRLF )
+	Response.Write ( "  </tr>" & vbCRLF )
+	Response.Write ( "  <tr>" & vbCRLF )
+	Response.Write ( "    <th width=100% colspan=3 height=18px bgcolor=#226C9B></th>" & vbCRLF )
+	Response.Write ( "  </tr>" & vbCRLF )
+	Response.Write ( "  <tr>" & vbCRLF )
+	Response.Write ( "    <th width=100% colspan=3 height=6px bgcolor=#FF0000></th>" & vbCRLF )
+	Response.Write ( "  </tr></table>" & vbCRLF )
+	Response.Write ( "  <span id='3MLogo' style='position:absolute;left:0;top:-10;'><image src=" & strImage & "></span> " & vbCRLF )
+	Response.Write ( "  <span id='HeaderTitle' style='position:absolute;left:175;top:0;' class=PageTitle>" & strArea & "</span> " & vbCRLF )
+	Response.Write ( "  <span id='HeaderTitle' style='position:absolute;right:2%;top:0;font-size:3em;' class=PageTitle>" &strTitle2 & "</span> " & vbCRLF )
+	Response.Write ( "  <span id='ReportsMenu' style='position:absolute;right:20%;top:49;' class=MenuTitle><a class='menuitem' href='http://usctap11/MZvisualboards/MZReportsMenu.asp' target='_top'>  >>Reports Menu</a></span> " & vbCRLF )
+	Response.Write ( "  <span id='Time' style='position:absolute;right:2%;top:49;' class=MenuTitle>" & now())
+	Response.Write ( "</span> " & vbCRLF )
+End Function
+
+Sub ScheduleBuild(strWG, dtWK, dtYR, dtWD)
+
+	call OpenDB(rs,conn,"PMCSMZ")
+	
+	sSQL = ""
+	sSQL = sSQL & "SELECT Order_Nbr, Order_Status, MMM_Id_Nbr, Promise_Date, Planned_Hours, Hours_Left, Comments, Cmpd, Schedule_Yield, Rate_Attain  "
+	sSQL = sSQL & "FROM cv_VB_Schedule "
+	sSQL = sSQL & "WHERE (WC = '" & strWG & "' and EOW_Year = '" & dtYR & "' and '" & dtWD & "' > 3 and (week = '" & dtWK & "' or week = '" & dtWK & "' + 1)) or (WC = '" & strWG & "' and EOW_Year = '" & dtYR & "' and '" & dtWD & "' <= 3 and week = '" & dtWK & "') " 
+	sSQL = sSQL & "Order by Seq"
+	rs.Open sSQL,conn
+	flds = rs.Fields.Count
+	buildtable = buildtable & "<TABLE width=100%;align=center>" & vbCrLf
+	buildtable = buildtable & "<TR  bgcolor=#C0C0C0>" & vbCrLf
+	buildtable = buildtable & "<TD>Order</TD>"
+	buildtable = buildtable & "<TD>OS</TD>"
+	buildtable = buildtable & "<TD>SKU</TD>"
+	buildtable = buildtable & "<TD>Prom Date</TD>"
+	buildtable = buildtable & "<TD>Plan Hrs</TD>"
+	buildtable = buildtable & "<TD>Hrs Left</TD>"
+	buildtable = buildtable & "<TD>Comments</TD>"
+	buildtable = buildtable & "<TD>C</TD>"
+	buildtable = buildtable & "<TD>Yield</TD>"
+	buildtable = buildtable & "<TD>Rate</TD>"
+	buildtable = buildtable & vbCrLf & "</TR>"
+	do while not rs.eof
+
 			
-      strCatalog  = "PMCSMZ"
-      Set Conn    = Server.CreateObject("ADODB.Connection")
-      Conn.Open "Provider=SQLOLEDB.1; Data Source=" & myServer("N") & "; Initial Catalog=" & myCatalog("N") & ";" &_
-                  "Network Library=DBMSSOCN;Application Name=SPFD_Web_" & PageName() & ";Persist Security Info=True;",myUserName(),myPassword()'usctdb2\sql2
-			set cmd     = Server.CreateObject("ADODB.Command")
-			set cmd.ActiveConnection = Conn
-			set rs      = Server.CreateObject("ADODB.Recordset")
-			set rsCont  = Server.CreateObject("ADODB.Recordset")
-			set rsSKUs  = Server.CreateObject("ADODB.Recordset")
-			
-			'*****  Form target website   *****
-			'FormTarget = "Picks.asp"
-			userNbr = UCASE(RIGHT(REQUEST.SERVERVARIABLES("LOGON_USER"),LEN(REQUEST.SERVERVARIABLES("LOGON_USER")) - INSTR(REQUEST.SERVERVARIABLES("LOGON_USER"),"\")))
-			ipAddr  = REQUEST.SERVERVARIABLES("REMOTE_ADDR")
-			'**************************
-			'***    USER SETTINGS   ***
-			'**************************
+		For i = 0 To flds - 1
+			buildtable = buildtable & "<TD "
+				strA=rs("Order_Status")
+				strC=rs("Cmpd")
+				strH=rs("Hours_Left")
+				If (strA = "A" and i = 1 )  Then
+					buildtable = buildtable & "bgcolor=#7FFF00><font size=3>" & rs.Fields(i).Value & "</font></TD>"
+				ElseIf 	(strH = "0" and strA = "A" and i = 5) Then
+					buildtable = buildtable & "bgcolor=#FF0000><font size=3>" & rs.Fields(i).Value & "</font></TD>"
+				Else
+					buildtable = buildtable & "><font size=3>" & rs.Fields(i).Value & "</font></TD>"
+				End If			
 					
-			SearchBucket    = REQUEST.FORM("SearchBucket")
-      SearchTerms     = REQUEST.FORM("SearchTerms")
+			
+		Next
+		buildtable = buildtable & vbCrLf & "</TR>"
 
-      IF SearchBucket = "SupplierId" THEN 
-        supIdSQL =  "SELECT DISTINCT" &_
-                    "    d.Vendor_Id " &_
-                    "  , d.Vendor_Name " &_
-                    "  , d.Main_Contact " &_
-                    "  , d.Contact_Phone " &_
-                    "  , d.Contact_Email " &_
-                    "  , d.Quality_Contact " &_
-                    "  , d.Quality_Phone " &_
-                    "  , d.Quality_Email " &_
-                    "  , d.eSMI_Flag " &_
-                    "  , d.Auto_Email " &_
-                    "  , d.Auto_Email_Recipient " &_
-                    "  , d.New_PO_Email " &_
-                    "  , d.Mid_LT_Email " &_
-                    "  , d.Approaching_Due_Email " &_
-                    "  , d.Past_Due_Email " &_
-                    "FROM ct_Supplier_Details d (NOLOCK) " &_
-                    "WHERE d.Vendor_Id LIKE '%" & SearchTerms & "%' " 
+		rs.movenext
+	loop
+	rs.Close
+	Set rs = Nothing
+	buildtable = buildtable & vbCrLf & "</TABLE>"
+	Response.Write ( buildtable & vbCRLF )
+	
+	Call CloseDB(rs,conn)
+	
+End Sub
 
-        rs.Open supIdSQL,conn
-        flds = rs.Fields.Count
-        rs.MOVEFIRST()
-        
-        supContSQL =  "SELECT " &_
-                      "    c.Vendor_Id " &_
-                      "  , c.Contact_Name " &_
-                      "  , c.Office_Phone " &_
-                      "  , c.Office_Phone_Ext " &_
-                      "  , c.Mobile_Nbr " &_
-                      "  , c.Fax_Nbr " &_
-                      "  , c.Email_Addr " &_
-                      "  , c.SC_Contact " &_
-                      "  , c.Quality_Contact " &_
-                      "  , c.Auto_Emails " &_
-                      "  , c.Active " &_
-                      "FROM ct_Supplier_Contacts c (NOLOCK)  " &_
-                      "WHERE c.Vendor_Id LIKE '%" & SearchTerms & "%' "
+Sub BuildMetric(strWG)
 
-        rsCont.Open supContSQL,conn
-        flds = rsCont.Fields.Count
-        rsCont.MOVEFIRST()
+	call OpenDB(rs,conn,"PMCSMZ")
 
-        SupplierSKUs = "SELECT " &_
-                        "    im.MMM_Id_Nbr " &_
-                        "  , im.Item_Desc " &_
-                        "  , im.Family_Code " &_
-                        "  , Analyst = h.Title_Column2 " &_
-                        "  , Engineer = COALESCE(ec.Eng_Full_Name, im.c_spfd_Eng_Code) " &_
-                        "FROM t_Item_Master im (NOLOCK)  " &_
-                        "JOIN ct_SCOT_Title_Help h (NOLOCK) ON LEFT(im.Family_Code,1) = h.Title_Column1 AND h.Title_Name = 'Family_Code' " &_
-                        "JOIN ct_Engineer_Codes ec (NOLOCK) ON im.c_spfd_Eng_Code = ec.Spfd_Eng_Code " &_
-                        "WHERE im.c_Vendor LIKE '%" & SearchTerms & "%' " 
+	sSQL = "SELECT Count(*) as Records "
+	sSQL = sSQL & "FROM cv_VB_Schedule_WTD_Metrics "
+	sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+	rs.Open sSQL,conn
+	rows = (rs("Records"))
+	rs.close
+	
+	If rows > 0 Then
+		sSQL = ""
+		sSQL = sSQL & "SELECT Schedule_Yield, Rate_Attain  "
+		sSQL = sSQL & "FROM cv_VB_Schedule_WTD_Metrics "
+		sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+		rs.Open sSQL,conn
+		' flds = rs.recordcount
+		' rs.movefirst
+		
+		' If flds = -1 Then
+			wtdYield = (rs("Schedule_Yield"))
+			wtdRate = (rs("Rate_Attain"))
+		rs.close	
+	Else
+		wtdYield = 0
+		wtdRate = 0
+	End If
+		
+		
+	sSQL = "SELECT Count(*) as Records "
+	sSQL = sSQL & "FROM cv_VB_Schedule_MTD_Metrics "
+	sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+	rs.Open sSQL,conn
+	rows = (rs("Records"))
+	rs.close
+	
+	If rows > 0 Then
+		sSQL = ""
+		sSQL = sSQL & "SELECT Schedule_Yield, Rate_Attain  "
+		sSQL = sSQL & "FROM cv_VB_Schedule_MTD_Metrics "
+		sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+		rs.Open sSQL,conn
+		' flds = rs.recordcount
+		' rs.movefirst
+		
+		' If flds = -1 Then
+			mtdYield = (rs("Schedule_Yield"))
+			mtdRate = (rs("Rate_Attain"))
+		rs.close	
+	Else
+		mtdYield = 0
+		mtdRate = 0
+	End If
+	
+	
+	 sSQL = "SELECT Count(*) as Records "
+	sSQL = sSQL & "FROM cv_VB_Schedule_YTD_Metrics "
+	sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+	rs.Open sSQL,conn
+	rows = (rs("Records"))
+	rs.close
+	
+	If rows > 0 Then
+		sSQL = ""
+		sSQL = sSQL & "SELECT Schedule_Yield, Rate_Attain  "
+		sSQL = sSQL & "FROM cv_VB_Schedule_YTD_Metrics "
+		sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+		rs.Open sSQL,conn
+		' flds = rs.recordcount
+		' rs.movefirst
+		
+		' If flds = -1 Then
+			ytdYield = (rs("Schedule_Yield"))
+			ytdRate = (rs("Rate_Attain"))
+		rs.close	
+	Else
+		ytdYield = 0
+		ytdRate = 0
+	End If
+	
+	
+	 sSQL = "SELECT Count(*) as Records "
+	sSQL = sSQL & "FROM cv_VB_Schedule_WTD_Status "
+	sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+	rs.Open sSQL,conn
+	rows = (rs("Records"))
+	rs.close
+	
+	If rows > 0 Then
+		sSQL = ""
+		sSQL = sSQL & "SELECT Hours_Left, Hours_Left_Work_Week, Hours_Validity  "
+		sSQL = sSQL & "FROM cv_VB_Schedule_WTD_Status "
+		sSQL = sSQL & "WHERE WC = '" & strWG & "' "
+		rs.Open sSQL,conn
+		' flds = rs.recordcount
+		' rs.movefirst
+		
+		' If flds = -1 Then
+			stsHrsLft = (rs("Hours_Left"))
+			stsHrsAv = (rs("Hours_Left_Work_Week"))
+			stsHrsChk = (rs("Hours_Validity"))
+		rs.close	
+	Else
+		stsHrsLft = 0
+		stsHrsAv = 0
+		stsHrsChk = 0
+	End If
+	
+	' IF StsHrsChk < 0 Then
+		' Color_Chk = "#FF0000"
+	' Else
+		' Color_Chk = "#7FFF00"
+	' End IF
+	Color_Chk = "#7FFF00"
+	Color_White = "#FFFFFF"
+	Color_Black = "#000000"
+	
+	'Build the Metrics Table	
+Response.Write ( "<Table width=100% border=1 ><tr><td width=100% > " & vbCRLF )
+	Response.Write ( "<table width=100% border=1 borderColor=" & Color_White & " ><tr><td width=100% > " & vbCRLF )	'Center the table
 
-        rsSKUs.Open SupplierSKUs,conn
-        rsSKUs.MOVEFIRST()
-      
-      
-      ELSEIF SearchBucket = "MMMIdNbr" THEN 
-        supIdSQL =  "SELECT " &_
-                    "    d.Vendor_Id " &_
-                    "  , d.Vendor_Name " &_
-                    "  , d.Main_Contact " &_
-                    "  , d.Contact_Phone " &_
-                    "  , d.Contact_Email " &_
-                    "  , d.Quality_Contact " &_
-                    "  , d.Quality_Phone " &_
-                    "  , d.Quality_Email " &_
-                    "  , d.eSMI_Flag " &_
-                    "  , d.Auto_Email " &_
-                    "  , d.Auto_Email_Recipient " &_
-                    "  , d.New_PO_Email " &_
-                    "  , d.Mid_LT_Email " &_
-                    "  , d.Approaching_Due_Email " &_
-                    "  , d.Past_Due_Email " &_
-                    "FROM ct_Supplier_Details d (NOLOCK) " &_
-                    "JOIN t_Item_Master im (NOLOCK) ON im.c_Vendor = d.Vendor_Id " &_
-                    "WHERE im.MMM_Id_Nbr IN ('" & SearchTerms & "') " 
+		' Response.Write ( "<tr class=Header10>" & vbCRLF )		'Define the Table Title
+			' Response.Write ( "<th Width=100% >Metrics</th>" & vbCRLF )
+		' Response.Write ( "</tr>" & vbCRLF )						'END - Define the Table Title
 
-        rs.Open supIdSQL,conn
-        flds = rs.Fields.Count
-        rs.MOVEFIRST()
+		Response.Write ( "<tr width=100% > " & vbCRLF )
+			Response.Write ( "<table width=100% >" & vbCRLF )	
+				Response.Write ( "<tr class=Header8 >" & vbCRLF )		'Define the Column Titles
+					Response.Write ( "<th Width=20% >Metrics </th>" & vbCRLF )
+					Response.Write ( "<th Width=20% >Yield</th>" & vbCRLF )
+					Response.Write ( "<th Width=20% >Rate Attainment</th>" & vbCRLF )
+					Response.Write ( "<th Width=20% ></th>" & vbCRLF )
+					Response.Write ( "<th Width=20% >Hours</th>" & vbCRLF )
+					
+				Response.Write ( "</tr>" & vbCRLF )
+				
+				Response.Write ( "<tr class=Data10 >" & vbCRLF )						
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( "<font class=Header8>Week To Date:</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & wtdYield & "</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & wtdRate & "</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( "<font class=Header8>Scheduled Hours Left:</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & stsHrsLft & "</font></td>" & vbCRLF )
+				Response.Write ( "</tr>" & vbCRLF )	
 
-        supplier = rs.Fields("Vendor_Id").value
+				Response.Write ( "<tr class=Data10 >" & vbCRLF )						
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( "<font class=Header8 color=" & Color_Black & " >Month To Date:</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & mtdYield & "</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & mtdRate & "</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( "<font class=Header8>Work Hours Left:</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & stsHrsAv & "</font></td>" & vbCRLF )
+				Response.Write ( "</tr>" & vbCRLF )	
+				
+				Response.Write ( "<tr class=Data10 >" & vbCRLF )						
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( "<font class=Header8 color=" & Color_Black & " >Year To Date:</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & ytdYield & "</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & ytdRate & "</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( "<font class=Header8>Hours Gap:</font></td>" & vbCRLF )
+					Response.Write ( "<td width=20% bgcolor=" & Color_White & vbCRLF )
+						Response.Write ( " ><font color=" & Color_Black & " >" & stsHrsChk & "</font></td>" & vbCRLF )
+				Response.Write ( "</tr>" & vbCRLF )	
+			Response.Write ( "</table>" & vbCRLF )
+			
+			
+		Response.Write ( "</tr>" )
 
-        
-        supContSQL =  "SELECT " &_
-                      "    c.Vendor_Id " &_
-                      "  , c.Contact_Name " &_
-                      "  , c.Office_Phone " &_
-                      "  , c.Office_Phone_Ext " &_
-                      "  , c.Mobile_Nbr " &_
-                      "  , c.Fax_Nbr " &_
-                      "  , c.Email_Addr " &_
-                      "  , c.SC_Contact " &_
-                      "  , c.Quality_Contact " &_
-                      "  , c.Auto_Emails " &_
-                      "  , c.Active " &_
-                      "FROM ct_Supplier_Contacts c (NOLOCK)  " &_
-                      "WHERE c.Vendor_Id IN ('" & supplier & "') "
+	Response.Write ( "</td></tr></table>" & vbCRLF )	'End - Center and make the border invisible
+Response.Write ( "</td></tr></table>" & vbCRLF )
 
-        rsCont.Open supContSQL,conn
-        flds = rsCont.Fields.Count
-        rsCont.MOVEFIRST()
+Call CloseDB(rs,conn)
 
-        SupplierSKUs = "SELECT " &_
-                        "    im.MMM_Id_Nbr " &_
-                        "  , im.Item_Desc " &_
-                        "  , im.Family_Code " &_
-                        "  , Analyst = h.Title_Column2 " &_
-                        "  , Engineer = COALESCE(ec.Eng_Full_Name, im.c_spfd_Eng_Code) " &_
-                        "FROM t_Item_Master im (NOLOCK)  " &_
-                        "JOIN ct_SCOT_Title_Help h (NOLOCK) ON LEFT(im.Family_Code,1) = h.Title_Column1 AND h.Title_Name = 'Family_Code' " &_
-                        "JOIN ct_Engineer_Codes ec (NOLOCK) ON im.c_spfd_Eng_Code = ec.Spfd_Eng_Code " &_
-                        "WHERE im.c_Vendor IN ('" & supplier & "') " 
+End Sub
 
-        rsSKUs.Open SupplierSKUs,conn
-        rsSKUs.MOVEFIRST()
-      ELSEIF SearchBucket = "PO" THEN 
-        
-        supIdSQL =  "SELECT " &_
-                    "    d.Vendor_Id " &_
-                    "  , d.Vendor_Name " &_
-                    "  , d.Main_Contact " &_
-                    "  , d.Contact_Phone " &_
-                    "  , d.Contact_Email " &_
-                    "  , d.Quality_Contact " &_
-                    "  , d.Quality_Phone " &_
-                    "  , d.Quality_Email " &_
-                    "  , d.eSMI_Flag " &_
-                    "  , d.Auto_Email " &_
-                    "  , d.Auto_Email_Recipient " &_
-                    "  , d.New_PO_Email " &_
-                    "  , d.Mid_LT_Email " &_
-                    "  , d.Approaching_Due_Email " &_
-                    "  , d.Past_Due_Email " &_
-                    "  , s.MMM_Id_Nbr " &_
-                    "FROM ct_Supplier_Details d (NOLOCK) " &_
-                    "JOIN t_Scheduled_Order s (NOLOCK)  ON d.Vendor_Id LIKE s.Vendor_Name + '%' " &_
-                    "WHERE s.Order_Nbr IN ('" & SearchTerms & "') " 
+' *********DCTruck page subs*****************************************************************************************************
 
-        rs.Open supIdSQL,conn
-        flds = rs.Fields.Count
-        rs.MOVEFIRST()
+Sub LaneBuild(strLane, strLaneName)
+	
+Response.Write ( "<table align=Left width=33.3% border=1 borderColor=" & Color_White & " ><tr><td > " & vbCRLF )	
+		Response.Write ( "<table width=100% border=1 borderColor=#C0C0C0 ><tr><td > " & vbCRLF )
+			Response.Write ( "<tr class=PageTitle24>" & vbCRLF )
+				Response.Write ( "<th>" & strLaneName & "</th>" & vbCRLF )
+			Response.Write ( "</tr>" & vbCRLF )
+		Response.Write ( "</td></tr></table>" & vbCRLF )
+		Response.Write ( "<table width=100% border=1 borderColor=#C0C0C0 ><tr><td > " & vbCRLF )
+			Response.Write ( "<tr class=PageTitle20>" & vbCRLF )
+				Response.Write ( "<th>Sku</th>" & vbCRLF )
+				Response.Write ( "<th>Load</th>" & vbCRLF )
+				Response.Write ( "<th>QC</th>" & vbCRLF )
+				Response.Write ( "<th>Loc</th>" & vbCRLF )
+				Response.Write ( "<th>PSC</th>" & vbCRLF )
+			Response.Write ( "</tr>" & vbCRLF )
+Call OpenDB(rs,conn,"PMCSMZ")	
+			sSQL = "SELECT Count(*) as Records "
+			sSQL = sSQL & "FROM cv_VB_DC_Truck_Detail "
+			sSQL = sSQL & "WHERE Left(Whse_Loc,3) in ('" & strLane & "') "
+			rs.Open sSQL,conn
+			rows = (rs("Records"))
+			rs.close
 
-        supplier = rs.Fields("Vendor_Id").value
-        chosenSKU = rs.Fields("MMM_Id_Nbr").value
+			If rows > 0 Then
+			sSQL = ""
+			sSQL = sSQL & "SELECT MMM_Id_Nbr, Load_Id, QC_Code, Whse_Loc, CASE WHEN PSC_Code = 'A' THEN 'N' ELSE 'Y' END AS PSC  "
+			sSQL = sSQL & "		,CASE WHEN MMM_Id_Nbr in ('13002967787','13003660993','13004949064','13005024149','13007762324' "
+			sSQL = sSQL & "									,'13003562579','13005968469','13005969848','13003568162') THEN 'R' "
+			sSQL = sSQL & "				WHEN MMM_Id_Nbr in ('13002975970','13008376116') THEN 'Y' ELSE '' END as Color_Code "
+			sSQL = sSQL & "FROM cv_VB_DC_Truck_Detail "
+			sSQL = sSQL & "WHERE Left(Whse_Loc,3) in ('" & strLane & "') "
+			sSQL = sSQL & "Order By Color_Code Desc,Tran_Date "
+			rs.Open sSQL,conn
+			rs.MoveFirst
+			Do While Not rs.EOF
+				strSku = rs("MMM_Id_Nbr")
+				strLoad = rs("Load_Id")
+				strQCcd = rs("QC_Code")
+				strWhse = rs("Whse_Loc")
+				strPSC = rs("PSC")
+				strQCColor = "#FFFFFF"
+				strQC = Left(strQCcd,1)
+					If strQC = "H" Then
+						strQCColor = "#FF0000"
+						Else If strQC = "Q" Then
+						strQCColor = "#FF0000"
+						End If
+					End If
+				strPSCColor = "#FFFFFF"
+					' If rs("PSC") = "N" Then
+						' strPSCColor =#FF0000"
+					' End If
+				strSkuColor = "#FFFFFF"
+					If strSku = "13002967787" or strSku = "13003660993" or strSku = "13004949064" or strSku = "13005024149" or strSku = "13007762324" or strSku = "13003562579" or strSku = "13005968469" or strSku = "13005969848" or strSku = "13003568162" Then
+							strSkuColor = "#FF0000"
+					End If
+					If strSku = "13002975970" or strSku = "13008376116" Then
+							strSkuColor = "#FFFF00"
+					End If
+				Response.Write ( "<TR class=PageTitle16><TH bgcolor=" & strSkuColor & ">" & strSku & " </TH>" & vbCRLF )
+				Response.Write ( "<TH>" & strLoad & " </TH>" & vbCRLF )
+				Response.Write ( "<TH bgcolor=" & strQCColor & ">" & strQCcd & " </TH>" & vbCRLF )
+				Response.Write ( "<TH>" & strWhse & " </TH>" & vbCRLF )
+				Response.Write ( "<TH>" & strPSC & " </TH></TR>" & vbCRLF )	
+				
+			rs.MoveNext
+			Loop
+			rs.close
+			End If
+			
+Call CloseDB(rs,conn)			
+		Response.Write ( "</td></tr></table>" & vbCRLF )
+		Response.Write ( "<TR class=PageTitle16><TH> " & strLaneName & " Load Count is " & rows & " </TH>" & vbCRLF )
+	Response.Write ( "</td></tr></table>" & vbCRLF )
+End Sub
+' *********End DCTruck page subs*****************************************************************************************************
 
-        
-        supContSQL =  "SELECT DISTINCT" &_
-                      "    c.Vendor_Id " &_
-                      "  , c.Contact_Name " &_
-                      "  , c.Office_Phone " &_
-                      "  , c.Office_Phone_Ext " &_
-                      "  , c.Mobile_Nbr " &_
-                      "  , c.Fax_Nbr " &_
-                      "  , c.Email_Addr " &_
-                      "  , c.SC_Contact " &_
-                      "  , c.Quality_Contact " &_
-                      "  , c.Auto_Emails " &_
-                      "  , c.Active " &_
-                      "FROM ct_Supplier_Contacts c (NOLOCK)  " &_
-                      "WHERE c.Vendor_Id IN ('" & supplier & "') "
-
-        rsCont.Open supContSQL,conn
-        flds = rsCont.Fields.Count
-        rsCont.MOVEFIRST()
-
-        SupplierSKUs =  "SELECT " &_
-                        "    im.MMM_Id_Nbr " &_
-                        "  , im.Item_Desc " &_
-                        "  , im.Family_Code " &_
-                        "  , Analyst = h.Title_Column2 " &_
-                        "  , Engineer = COALESCE(ec.Eng_Full_Name, im.c_spfd_Eng_Code) " &_
-                        "  , Chosen_SKU = " &_
-                        "      CASE " &_
-                        "        WHEN im.MMM_Id_Nbr = '" & chosenSKU & "' THEN 1 " &_
-                        "        ELSE 2 " &_
-                        "      END " &_
-                        "FROM t_Item_Master im (NOLOCK)  " &_
-                        "LEFT JOIN ct_SCOT_Title_Help h (NOLOCK) ON LEFT(im.Family_Code,1) = h.Title_Column1 AND h.Title_Name = 'Family_Code' " &_
-                        "LEFT JOIN ct_Engineer_Codes ec (NOLOCK) ON im.c_spfd_Eng_Code = ec.Spfd_Eng_Code " &_
-                        "WHERE im.c_Vendor IN ('" & supplier & "') " &_
-                        "ORDER BY " &_
-                        "      CASE " &_
-                        "        WHEN im.MMM_Id_Nbr = '" & chosenSKU & "' THEN 1 " &_
-                        "        ELSE 2 " &_
-                        "      END "
-
-        rsSKUs.Open SupplierSKUs,conn
-        rsSKUs.MOVEFIRST()
-
-      END IF
-      
-      IF SearchBucket = "SupplierName" THEN
-        supIdSQL =  "SELECT " &_
-                    "    d.Vendor_Id " &_
-                    "  , d.Vendor_Name " &_
-                    "  , d.eSMI_Flag " &_
-                    "  , d.Auto_Email " &_
-                    "  , d.New_PO_Email " &_
-                    "  , d.Mid_LT_Email " &_
-                    "  , d.Approaching_Due_Email " &_
-                    "  , d.Past_Due_Email " &_
-                    "FROM ct_Supplier_Details d (NOLOCK) " &_
-                    "WHERE d.Vendor_Name LIKE '%" & SearchTerms & "%' " 
-
-        rs.Open supIdSQL,conn
-        flds = rs.Fields.Count
-        rs.MOVEFIRST()
-        %>
-          <div id="Suppliers">
-            <div id="SupplierInfo">
-              <table>
-                <tr>
-                  <th>Supplier Id</th>
-                  <th>Suplier Name</th>
-                  <th style="word-wrap: break-word; max-width:35px;">eSMI Flag</th>
-                  <th style="word-wrap: break-word; max-width:40px;">Auto Email</th>
-                  <th style="word-wrap: break-word; max-width:45px;">New PO Email</th>
-                  <th style="word-wrap: break-word; max-width:45px;">Mid LT Email</th>
-                  <th style="word-wrap: break-word; max-width:90px;">Approaching Due Date Email</th>
-                  <th style="word-wrap: break-word; max-width:40px;">Past Due Email</th>
-                  <th>Select</th>
-                </tr>
-                <%
-                  k = 0
-                  k = k + 1
-                  DO WHILE NOT rs.eof
-                    RESPONSE.WRITE("<tr>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Vendor_Id").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierName" & k & "'>" & rs.fields("Vendor_Name").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("eSMI_Flag").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Auto_Email").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("New_PO_Email").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Mid_LT_Email").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Approaching_Due_Email").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Past_Due_Email").value & "</td>")
-                      %>
-                        <td>
-                          <button class="submitbtn" id='SupplierSelect' onclick="SelectSupplierInfo('<%RESPONSE.WRITE(k)%>')" value="Select">Select</button>
-                        </td>
-                      <%
-                    RESPONSE.WRITE("</tr>")
-                    k = k + 1
-                    rs.MOVENEXT
-                  LOOP
-                %>
-              </table>
-            </div>
-          </div>
-
-        <%
-        rs.close
-      ELSEIF SearchBucket = "ItemDesc" THEN
-        supIdSQL =  "SELECT " &_
-                    "    Vendor_Id = COALESCE(d.Vendor_Id, im.c_Vendor) " &_
-                    "  , d.Vendor_Name " &_
-                    "  , im.MMM_Id_Nbr " &_
-                    "  , im.Item_Desc " &_
-                    "  , im.Family_Code " &_
-                    "  , Analyst = h.Title_Column2 " &_
-                    "  , Engineer = COALESCE(e.Eng_Full_Name,im.c_spfd_Eng_Code) " &_
-                    "  , Last_Load_Birth_Year = MAX(DATEPART(YEAR,l.Birth_Date))" &_
-                    "FROM t_Item_Master im (NOLOCK)  " &_
-                    "LEFT JOIN ct_Supplier_Details d (NOLOCK) ON im.c_Vendor = d.Vendor_Id " &_
-                    "LEFT JOIN ct_SCOT_Title_Help h (NOLOCK) ON LEFT(im.Family_Code,1) = h.Title_Column1 AND h.Title_Name = 'Family_Code' " &_
-                    "LEFT JOIN ct_Engineer_Codes e (NOLOCK) ON im.c_spfd_Eng_Code = e.Spfd_Eng_Code " &_
-                    "LEFT JOIN t_Load_Archive l (NOLOCK) ON im.MMM_Id_Nbr = l.MMM_Id_Nbr " &_
-                    "WHERE im.Item_Desc LIKE '%" & SearchTerms & "%' " &_
-                    "  AND im.c_Vendor IS NOT NULL " &_
-                    "GROUP BY " &_
-                    "    COALESCE(d.Vendor_Id, im.c_Vendor) " &_
-                    "  , d.Vendor_Name " &_
-                    "  , im.MMM_Id_Nbr " &_
-                    "  , im.Item_Desc " &_
-                    "  , im.Family_Code " &_
-                    "  , h.Title_Column2 " &_
-                    "  , COALESCE(e.Eng_Full_Name,im.c_spfd_Eng_Code) " &_
-                    "ORDER BY  " &_
-                    "    MAX(DATEPART(YEAR,l.Birth_Date)) DESC " &_
-                    "  , im.MMM_Id_Nbr " 
-
-        rs.Open supIdSQL,conn
-        flds = rs.Fields.Count
-        rs.MOVEFIRST()
-        %>
-          <div id="Suppliers">
-            <div id="SupplierInfo">
-              <table>
-                <tr>
-                  <th>Supplier Id</th>
-                  <th>Suplier Name</th>
-                  <th>MMM Id Nbr</th>
-                  <th>Item Desc</th>
-                  <th>FC</th>
-                  <th>Analyst</th>
-                  <th>Engineer</th>
-                  <th>Last Load<br>Birth Year</th>
-                  <th>Select</th>
-                </tr>
-                <%
-                  k = 0
-                  k = k + 1
-                  DO WHILE NOT rs.eof
-                    RESPONSE.WRITE("<tr>")
-                      RESPONSE.WRITE("<td id='SupplierId" & k & "'>" & rs.fields("Vendor_Id").value & "</td>")
-                      RESPONSE.WRITE("<td id='SupplierName" & k & "'>" & rs.fields("Vendor_Name").value & "</td>")
-                      RESPONSE.WRITE("<td id='MMMIdNbr" & k & "'>" & rs.fields("MMM_Id_Nbr").value & "</td>")
-                      RESPONSE.WRITE("<td id='ItemDesc" & k & "'>" & rs.fields("Item_Desc").value & "</td>")
-                      RESPONSE.WRITE("<td id='FC" & k & "'>" & rs.fields("Family_Code").value & "</td>")
-                      RESPONSE.WRITE("<td id='Analyst" & k & "'>" & rs.fields("Analyst").value & "</td>")
-                      RESPONSE.WRITE("<td id='Engineer" & k & "'>" & rs.fields("Engineer").value & "</td>")
-                      RESPONSE.WRITE("<td id='LastBYear" & k & "'>" & rs.fields("Last_Load_Birth_Year").value & "</td>")
-                      %>
-                        <td>
-                          <button class="submitbtn" id='SupplierSelect' onclick="SelectSupplierInfo('<%RESPONSE.WRITE(k)%>')" value="Select">Select</button>
-                        </td>
-                      <%
-                    RESPONSE.WRITE("</tr>")
-                    k = k + 1
-                    rs.MOVENEXT
-                  LOOP
-                %>
-              </table>
-            </div>
-          </div>
-        <%
-        rs.close
-      ELSEIF (SearchBucket = "SupplierId") OR (SearchBucket = "MMMIdNbr") OR (SearchBucket = "PO") THEN
-
-        textareaWidth = 26
-        
-        %>
-          <div id="Suppliers">
-            <div id="SupplierInfo">
-              <table>
-                <tr>
-                  <th>Supplier Id</th>
-                  <th>Suplier Name</th>
-                  <th style="word-wrap: break-word; max-width:35px;">eSMI Flag</th>
-                  <th style="word-wrap: break-word; max-width:40px;">Auto Email</th>
-                  <th style="word-wrap: break-word; max-width:45px;">New PO Email</th>
-                  <th style="word-wrap: break-word; max-width:45px;">Mid LT Email</th>
-                  <th style="word-wrap: break-word; max-width:90px;">Approaching Due Date Email</th>
-                  <th style="word-wrap: break-word; max-width:40px;">Past Due Email</th>
-                  <th>Save</th>
-                </tr>
-                <tr>
-                <%
-                  RESPONSE.WRITE("<td style='width:200px;' id='SupplierId'>")
-                    RESPONSE.WRITE("<span id='SupplierIdMain' style='display:none;'>" & rs.fields("Vendor_Id").value & "</span>")
-                    RESPONSE.WRITE("<input type='text' id='NewSupplierId' value='" & rs.fields("Vendor_Id").value & "'")
-                  RESPONSE.WRITE("</td>")
-                  RESPONSE.WRITE("<td>")
-                    RESPONSE.WRITE("<textarea id='SupplierName' rows='3' cols='" & textareaWidth & "'>" & rs.fields("Vendor_Name").value & "</textarea>")
-                    RESPONSE.WRITE("<input type='text' id='SearchBucket' value='" & SearchBucket & "' style='display:none;'>")
-                  RESPONSE.WRITE("</td>")
-                  RESPONSE.WRITE("<td>")
-                    RESPONSE.WRITE("<select name='esmiSelect' id='esmiSelect'>")                
-                      IF rs.fields("eSMI_Flag").value = "Y" THEN 
-                        SelectY = " selected "
-                        SelectN = ""
-                      ELSE 
-                        SelectN = " selected "
-                        SelectY = ""
-                      END IF
-                      RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                      RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                    RESPONSE.WRITE("</select>")
-                  RESPONSE.WRITE("</td>")
-                  RESPONSE.WRITE("<td>")
-                    RESPONSE.WRITE("<select name='autoEmailSelect' id='autoEmailSelect'>")                
-                      IF rs.fields("Auto_Email").value = "Y" THEN 
-                        SelectY = " selected "
-                        SelectN = ""
-                      ELSE 
-                        SelectN = " selected "
-                        SelectY = ""
-                      END IF
-                      RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                      RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                    RESPONSE.WRITE("</select>")
-                  RESPONSE.WRITE("</td>")
-                  RESPONSE.WRITE("<td>")
-                    RESPONSE.WRITE("<select name='NewPOSelect' id='NewPOSelect'>")                
-                      IF rs.fields("New_PO_Email").value = "Y" THEN 
-                        SelectY = " selected "
-                        SelectN = ""
-                      ELSE 
-                        SelectN = " selected "
-                        SelectY = ""
-                      END IF
-                      RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                      RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                    RESPONSE.WRITE("</select>")
-                  RESPONSE.WRITE("</td>")
-                  RESPONSE.WRITE("<td>")
-                    RESPONSE.WRITE("<select name='MidLTSelect' id='MidLTSelect'>")                
-                      IF rs.fields("Mid_LT_Email").value = "Y" THEN 
-                        SelectY = " selected "
-                        SelectN = ""
-                      ELSE 
-                        SelectN = " selected "
-                        SelectY = ""
-                      END IF
-                      RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                      RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                    RESPONSE.WRITE("</select>")
-                  RESPONSE.WRITE("</td>")
-                  RESPONSE.WRITE("<td>")
-                    RESPONSE.WRITE("<select name='ApproachLTSelect' id='ApproachLTSelect'>")                
-                      IF rs.fields("Approaching_Due_Email").value = "Y" THEN 
-                        SelectY = " selected "
-                        SelectN = ""
-                      ELSE 
-                        SelectN = " selected "
-                        SelectY = ""
-                      END IF
-                      RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                      RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                    RESPONSE.WRITE("</select>")
-                  RESPONSE.WRITE("</td>")
-                  RESPONSE.WRITE("<td>")
-                    RESPONSE.WRITE("<select name='PastDueSelect' id='PastDueSelect'>")                
-                      IF rs.fields("Past_Due_Email").value = "Y" THEN 
-                        SelectY = " selected "
-                        SelectN = ""
-                      ELSE 
-                        SelectN = " selected "
-                        SelectY = ""
-                      END IF
-                      RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                      RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                    RESPONSE.WRITE("</select>")
-                  RESPONSE.WRITE("</td>")
-                  %>
-                    <td><button class="submitbtn" id='SupplierSave' onclick="SaveSupplierInfo()" value="Save">Save</button></td>
-                  <%
-                  'RESPONSE.WRITE("<td><span id='MySql'>" & SupplierSKUs & "</span></td>")
-                RESPONSE.WRITE("</tr>")
-                
-                %>
-              </table>
-            </div>
-            <div id="SupplierContacts">
-              <table>
-                <tr>
-                  <th>Contact Name</th>
-                  <th>Office Phone</th>
-                  <th>Office Ext</th>
-                  <th>Mobile Nbr</th>
-                  <th>Fax Nbr</th>
-                  <th id="ContactEmailHead">Email</th>
-                  <th id="ContactYNHead">SC Contact</th>
-                  <th id="ContactYNHead">Quality Contact</th>
-                  <th id="ContactYNHead">Auto Emails</th>
-                  <th id="ContactYNHead">Active</th>
-                  <th>Save</th>
-                </tr>
-              <%
-                j = 0
-              %>
-                <tr>
-                  <td>
-                    <input type='text' id='ContactName<%RESPONSE.WRITE(j)%>'>
-                    <span id='CurrContactName<%RESPONSE.WRITE(j)%>' style='display:none;'></span>
-                  </td>
-                  <td><input type='text' id='OfficePhone<%RESPONSE.WRITE(j)%>' style='width:100px;'></td>
-                  <td><input type='text' id='OfficeExt<%RESPONSE.WRITE(j)%>' style='width:50px;'></td>
-                  <td><input type='text' id='MobileNbr<%RESPONSE.WRITE(j)%>' style='width:100px;'></td>
-                  <td><input type='text' id='FaxNbr<%RESPONSE.WRITE(j)%>' style='width:100px;'></td>
-                  <td><input type='text' id='EmailAddr<%RESPONSE.WRITE(j)%>' style='width:245px;'></td>
-                  <td>
-                    <select id='SCContact<%RESPONSE.WRITE(j)%>'>
-                      <option value='N'>N</option>
-                      <option value='Y' selected>Y</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select id='QualContact<%RESPONSE.WRITE(j)%>'> 
-                      <option value='N'>N</option>
-                      <option value='Y' selected>Y</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select id='AutoEmails<%RESPONSE.WRITE(j)%>'>
-                      <option value='N'>N</option>
-                      <option value='Y' selected>Y</option>
-                    </select>
-                  </td>
-                  <td>
-                    <select id='ContactActive<%RESPONSE.WRITE(j)%>'>
-                      <option value='N'>N</option>
-                      <option value='Y' selected>Y</option>
-                    </select>
-                  </td>
-                  <td><button class="submitbtn" id='ContactUpdate<%RESPONSE.WRITE(j)%>' onclick="SaveSupplierContInfo('<%RESPONSE.WRITE(j)%>','ContactUpdate')" value="Insert">Insert</button></td>
-                </tr>
-              <%
-                j = j + 1
-                DO WHILE NOT rsCont.eof
-                  RESPONSE.WRITE("<tr>")
-                    RESPONSE.WRITE("<td>")
-                      RESPONSE.WRITE("<input type='text' id='ContactName" & j & "' value='" & rsCont.fields("Contact_Name").value & "'>")
-                      RESPONSE.WRITE("<span id='CurrContactName" & j & "' style='display:none;'>" & rsCont.fields("Contact_Name").value & "</span>")
-                    RESPONSE.WRITE("</td>")
-                    RESPONSE.WRITE("<td><input type='text' id='OfficePhone" & j & "' value='" & rsCont.fields("Office_Phone").value & "' style='width:100px;'></td>")
-                    RESPONSE.WRITE("<td><input type='text' id='OfficeExt" & j & "' value='" & rsCont.fields("Office_Phone_Ext").value & "' style='width:50px;'></td>")
-                    RESPONSE.WRITE("<td><input type='text' id='MobileNbr" & j & "' value='" & rsCont.fields("Mobile_Nbr").value & "' style='width:100px;'></td>")
-                    RESPONSE.WRITE("<td><input type='text' id='FaxNbr" & j & "' value='" & rsCont.fields("Fax_Nbr").value & "' style='width:100px;'></td>")
-                    RESPONSE.WRITE("<td><input type='text' id='EmailAddr" & j & "' value='" & rsCont.fields("Email_Addr").value & "' style='width:245px;'></td>")
-                    RESPONSE.WRITE("<td>")
-                      RESPONSE.WRITE("<select id='SCContact" & j & "'>")  
-                        IF rsCont.fields("SC_Contact").value = "Y" THEN 
-                          SelectY = " selected "
-                          SelectN = ""
-                        ELSE 
-                          SelectN = " selected "
-                          SelectY = ""
-                        END IF
-                        RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                        RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                      RESPONSE.WRITE("</select>")
-                    RESPONSE.WRITE("</td>")
-                    RESPONSE.WRITE("<td>")
-                      RESPONSE.WRITE("<select id='QualContact" & j & "'>")  
-                        IF rsCont.fields("Quality_Contact").value = "Y" THEN 
-                          SelectY = " selected "
-                          SelectN = ""
-                        ELSE 
-                          SelectN = " selected "
-                          SelectY = ""
-                        END IF
-                        RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                        RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                      RESPONSE.WRITE("</select>")
-                    RESPONSE.WRITE("</td>")
-                    RESPONSE.WRITE("<td>")
-                      RESPONSE.WRITE("<select id='AutoEmails" & j & "'>")  
-                        IF rsCont.fields("Auto_Emails").value = "Y" THEN 
-                          SelectY = " selected "
-                          SelectN = ""
-                        ELSE 
-                          SelectN = " selected "
-                          SelectY = ""
-                        END IF
-                        RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                        RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                      RESPONSE.WRITE("</select>")
-                    RESPONSE.WRITE("</td>")
-                    RESPONSE.WRITE("<td>")
-                      RESPONSE.WRITE("<select id='ContactActive" & j & "'>")  
-                        IF rsCont.fields("Active").value = "Y" THEN 
-                          SelectY = " selected "
-                          SelectN = ""
-                        ELSE 
-                          SelectN = " selected "
-                          SelectY = ""
-                        END IF
-                        RESPONSE.WRITE("<option value='N'" & SelectN & ">N</option>")
-                        RESPONSE.WRITE("<option value='Y'" & SelectY & ">Y</option>")
-                      RESPONSE.WRITE("</select>")
-                    RESPONSE.WRITE("</td>") 
-                      %>
-                        <td><button class="submitbtn" id='ContactUpdate<%RESPONSE.WRITE(j)%>' onclick="SaveSupplierContInfo('<%RESPONSE.WRITE(j)%>','ContactUpdate')" value="Save">Save</button></td>
-                      <%
-                    RESPONSE.WRITE("</tr>")
-                  RESPONSE.WRITE("</tr>")
-                  rsCont.MOVENEXT
-                  j = j + 1
-                LOOP
-              %>
-              </table>
-            </div>
-            <div id = "SupplierSKUs">
-              <table>
-                <tr>
-                  <th>3M Id Nbr</th>
-                  <th>Item Desc</th>
-                  <th>FC</th>
-                  <th>Analyst</th>
-                  <th>Engineer</th>
-                </tr>
-                <%
-                  DO WHILE NOT rsSKUs.eof
-                    RESPONSE.WRITE("<tr>")
-                      RESPONSE.WRITE("<td>" & rsSKUs.fields("MMM_Id_Nbr").value & "</td>")
-                      RESPONSE.WRITE("<td>" & rsSKUs.fields("Item_Desc").value & "</td>")
-                      RESPONSE.WRITE("<td>" & rsSKUs.fields("Family_Code").value & "</td>")
-                      RESPONSE.WRITE("<td>" & rsSKUs.fields("Analyst").value & "</td>")
-                      RESPONSE.WRITE("<td>" & rsSKUs.fields("Engineer").value & "</td>")
-                    RESPONSE.WRITE("</tr>")
-                    rsSKUs.MOVENEXT
-                  LOOP
-                %>
-              </table>
-            </div>
-          </div>
-        <%
-        
-        rs.CLOSE
-        rsSKUs.CLOSE
-        rsCont.CLOSE
-      END IF        
-		%>
-	</body>
-</html>
+%>
