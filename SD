@@ -1,25 +1,5 @@
-supContSQL =  "SELECT " &_
-                      "    GROUP_CONCAT(c.Vendor_Id) AS Vendor_Id " &_
-                      "  , c.Contact_Name " &_
-                      "  , c.Office_Phone " &_
-                      "  , c.Office_Phone_Ext " &_
-                      "  , c.Mobile_Nbr " &_
-                      "  , c.Fax_Nbr " &_
-                      "  , c.Email_Addr " &_
-                      "  , c.SC_Contact " &_
-                      "  , c.Quality_Contact " &_
-                      "  , c.Auto_Emails " &_
-                      "  , c.Active " &_
-                      "FROM ct_Supplier_Contacts c (NOLOCK)  " &_
-                      "WHERE c.Vendor_Id LIKE '%" & SearchTerms & "%' " &_
-                      "GROUP BY " &_
-                      "   c.Contact_Name " &_
-                      "  , c.Office_Phone " &_
-                      "  , c.Office_Phone_Ext " &_
-                      "  , c.Mobile_Nbr " &_
-                      "  , c.Fax_Nbr " &_
-                      "  , c.Email_Addr " &_
-                      "  , c.SC_Contact " &_
-                      "  , c.Quality_Contact " &_
-                      "  , c.Auto_Emails " &_
-                      "  , c.Active "
+SELECT DB_NAME() AS DatabaseName, 
+       TABLE_SCHEMA, 
+       TABLE_NAME
+FROM INFORMATION_SCHEMA.TABLES
+WHERE TABLE_NAME = 'ct_Supplier_Details';
