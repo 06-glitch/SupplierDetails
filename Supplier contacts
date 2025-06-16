@@ -1,0 +1,91 @@
+<div id="SupplierContacts">
+  <table>
+    <tr>
+      <th>Contact Name</th>
+      <th>Office Phone</th>
+      <th>Office Ext</th>
+      <th>Mobile Nbr</th>
+      <th>Fax Nbr</th>
+      <th id="ContactEmailHead">Email</th>
+      <th id="SCContactHead">SC Contact</th>
+      <th id="QualContactHead">Quality Contact</th>
+      <th id="AutoEmailsHead">Auto Emails</th>
+      <th id="ActiveHead">Active</th>
+      <th>Save</th>
+    </tr>
+
+    <%
+    j = 0
+    %>
+    <tr>
+      <td><input type='text' id='ContactName<%= j %>'><span id='CurrContactName<%= j %>' style='display:none;'></span></td>
+      <td><input type='text' id='OfficePhone<%= j %>' style='width:100px;'></td>
+      <td><input type='text' id='OfficeExt<%= j %>' style='width:50px;'></td>
+      <td><input type='text' id='MobileNbr<%= j %>' style='width:100px;'></td>
+      <td><input type='text' id='FaxNbr<%= j %>' style='width:100px;'></td>
+      <td><input type='text' id='EmailAddr<%= j %>' style='width:245px;'></td>
+      <td><select id='SCContact<%= j %>'><option value='N'>N</option><option value='Y' selected>Y</option></select></td>
+      <td><select id='QualContact<%= j %>'><option value='N'>N</option><option value='Y' selected>Y</option></select></td>
+      <td><select id='AutoEmails<%= j %>'><option value='N'>N</option><option value='Y' selected>Y</option></select></td>
+      <td><select id='ContactActive<%= j %>'><option value='N'>N</option><option value='Y' selected>Y</option></select></td>
+      <td><button class="submitbtn" id='ContactUpdate<%= j %>' onclick="SaveSupplierContInfo('<%= j %>', 'ContactUpdate')" value="Insert">Insert</button></td>
+    </tr>
+
+    <%
+    j = j + 1
+    DO WHILE NOT rsCont.EOF
+      ContactName = rsCont("Contact_Name")
+      OfficePhone = rsCont("Office_Phone")
+      OfficeExt = rsCont("Office_Phone_Ext")
+      MobileNbr = rsCont("Mobile_Nbr")
+      FaxNbr = rsCont("Fax_Nbr")
+      EmailAddr = rsCont("Email_Addr")
+    %>
+      <tr>
+        <td>
+          <input type='text' id='ContactName<%= j %>' value='<%= ContactName %>'>
+          <span id='CurrContactName<%= j %>' style='display:none;'><%= ContactName %></span>
+        </td>
+        <td><input type='text' id='OfficePhone<%= j %>' value='<%= OfficePhone %>' style='width:100px;'></td>
+        <td><input type='text' id='OfficeExt<%= j %>' value='<%= OfficeExt %>' style='width:50px;'></td>
+        <td><input type='text' id='MobileNbr<%= j %>' value='<%= MobileNbr %>' style='width:100px;'></td>
+        <td><input type='text' id='FaxNbr<%= j %>' value='<%= FaxNbr %>' style='width:100px;'></td>
+        <td><input type='text' id='EmailAddr<%= j %>' value='<%= EmailAddr %>' style='width:245px;'></td>
+
+        <td>
+          <select id='SCContact<%= j %>'>
+            <option value='N' <%= IIf(rsCont("SC_Contact") = "N", "selected", "") %>>N</option>
+            <option value='Y' <%= IIf(rsCont("SC_Contact") = "Y", "selected", "") %>>Y</option>
+          </select>
+        </td>
+
+        <td>
+          <select id='QualContact<%= j %>'>
+            <option value='N' <%= IIf(rsCont("Quality_Contact") = "N", "selected", "") %>>N</option>
+            <option value='Y' <%= IIf(rsCont("Quality_Contact") = "Y", "selected", "") %>>Y</option>
+          </select>
+        </td>
+
+        <td>
+          <select id='AutoEmails<%= j %>'>
+            <option value='N' <%= IIf(rsCont("Auto_Emails") = "N", "selected", "") %>>N</option>
+            <option value='Y' <%= IIf(rsCont("Auto_Emails") = "Y", "selected", "") %>>Y</option>
+          </select>
+        </td>
+
+        <td>
+          <select id='ContactActive<%= j %>'>
+            <option value='N' <%= IIf(rsCont("Active") = "N", "selected", "") %>>N</option>
+            <option value='Y' <%= IIf(rsCont("Active") = "Y", "selected", "") %>>Y</option>
+          </select>
+        </td>
+
+        <td><button class="submitbtn" id='ContactUpdate<%= j %>' onclick="SaveSupplierContInfo('<%= j %>', 'ContactUpdate')" value="Save">Save</button></td>
+      </tr>
+    <%
+      rsCont.MoveNext
+      j = j + 1
+    LOOP
+    %>
+  </table>
+</div>
