@@ -1,0 +1,101 @@
+Absolutely. Here's a detailed explanation of the PowerBuilder code you're showing — line by line — so you can confidently explain it in your meeting.
+
+---
+
+### 🔷 **Purpose of the Code:**
+
+This code **updates the warehouse storage handling codes** for a given storage location **if it's a "TRANSIT" trailer** and starts with `"OB"` (indicating Out-Bound). These trailers can only be assigned specific handling codes that are compatible with a remote warehouse (likely Building 4).
+
+---
+
+### ✅ **Step-by-Step Explanation:**
+
+#### `IF ls_storage_loc_type_code = "TRANSIT" AND Left(ls_storage_loc_nbr, 2) = "OB" THEN`
+
+* This checks **two conditions**:
+
+  1. The storage location is of type `"TRANSIT"`.
+  2. Its location number **starts with `"OB"`**, which identifies it as an outbound trailer.
+
+> ✅ **Only if both are true**, we continue to update the handling codes for this location.
+
+---
+
+#### `DELETE FROM t_Storage_Loc_Whse_Storage_Handling_Xref WHERE Storage_Loc_Nbr = :ls_storage_loc_nbr;`
+
+* This removes **any existing handling codes** assigned to this storage location from the cross-reference table `t_Storage_Loc_Whse_Storage_Handling_Xref`.
+
+> 💡 This ensures there's no duplication or conflict when inserting new codes.
+
+---
+
+#### `IF SQLCA.sqlcode <> 0 THEN`
+
+* This checks if the **DELETE operation failed** (i.e., `sqlcode` is not 0).
+
+#### `ls_err_msg = SQLCA.sqlerrtext`
+
+* Stores the error message in a string variable.
+
+#### `messagebox("Usage Warning", "Cleanup of Warehouse Storage Handling Codes failed. Contact Inventory Accounting: " + ls_err_msg)`
+
+* Shows a **message box to the user** explaining that the deletion failed and includes the actual error.
+
+> 🚨 Good for debugging and alerting inventory teams if something goes wrong.
+
+---
+
+### 🔄 **Next Step: Insert New Allowed Codes**
+
+#### `INSERT INTO t_Storage_Loc_Whse_Storage_H...`
+
+You're now inserting **the new set of valid handling codes** (for OB trailers) into the same table.
+
+The format:
+
+```sql
+INSERT INTO t_Storage_Loc_Whse_Storage_Handling_Xref
+(MMM_Facility_Code, Storage_Loc_Nbr, Warehouse_Storage_Handling_Code)
+```
+
+The values being inserted:
+
+```sql
+SELECT 'HT', :ls_storage_loc_nbr, '2'
+UNION SELECT 'HT', :ls_storage_loc_nbr, '9'
+UNION SELECT 'HT', :ls_storage_loc_nbr, 'A'
+UNION SELECT 'HT', :ls_storage_loc_nbr, 'E'
+UNION SELECT 'HT', :ls_storage_loc_nbr, 'F'
+```
+
+* `'HT'` is likely the facility code (hardcoded).
+* `:ls_storage_loc_nbr` is the location number being assigned the codes.
+* The third column (`'2'`, `'9'`, `'A'`, `'E'`, `'F'`) are **the only valid handling codes** for transit trailers going to the remote warehouse.
+
+> ✅ `UNION` is used to combine multiple `SELECT` statements into one `INSERT`.
+
+---
+
+#### `IF SQLCA.sqlcode <> 0 THEN`
+
+* Checks if the **INSERT operation failed**.
+
+#### `ls_err_msg = SQLCA.sqlerrtext`
+
+* Gets the error message.
+
+#### `messagebox("Usage Warning", "Insert of Warehouse Storage Handling Codes failed. Contact Inventory Accounting: " + ls_err_msg)`
+
+* Notifies the user that the insert failed and includes the error message.
+
+---
+
+### 📌 **Key Takeaways for the Meeting:**
+
+* This code is part of a **data integrity check** to ensure only **valid storage handling codes** are assigned to **outbound transit trailers**.
+* Prevents misloading by ensuring **only products with compatible codes** are routed to remote warehouses.
+* If anything fails, the system **alerts the user** with clear error messages.
+
+---
+
+If you'd like, I can help you write a 30-second summary to speak in your meeting. Just let me know.
