@@ -13,7 +13,7 @@ ll_acct_code = lds_datastore.GetItemNumber(1, "accounting_control_code")
 
 IF ls_seg_cond = "D" AND (ll_acct_code = 3 OR ll_acct_code = 5 OR IsNull(ll_acct_code)) THEN
     in_returnObject.nf_SetReturnValue(-1)
-    in_returnObject.s_message = "Error: GGSM SEG COND is 'D' and accounting_control_code is 3, 5, or NULL — not allowed."
+    // Remove this: in_returnObject.s_message = ...
     RETURN in_returnObject
 END IF
 
