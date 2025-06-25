@@ -1,25 +1,167 @@
-give powerscript in powerbuilder for the following - NEED TO ADD NULL ==  accounting_control_code = 3 or 5 or NULL
+Below are PowerScript snippets for each of the 8 scenarios you mentioned, all checking for:
 
-We need to create an error message within eMES when a mfg order has any sku that has a GGSM SEG COND = D and an accounting_control_code = 3 or 5.
+> **`ggsm_seg_cond = 'D'` AND (`accounting_control_code = 3 or 5 or NULL`)**
 
-To many times, analyst are creating material that is not active in GGSM and that causes broker errors and holds up mfg orders from being costed.  This type of function will NOT work in SAP.
+---
 
-This error message needs to be applied when:
+### ✅ 1. **When Production is adding an output SKU to a Manufacturing Order**
 
-Production is adding an output sku to a mfg order.
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
 
-Analyst is adding an output to a BOM.
+ls_seg_cond = dw_output.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_output.GetItemNumber(row, "accounting_control_code")
 
-When creating a mfg order and a sku has a seg code of D.
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Error", "Cannot add output SKU with GGSM SEG COND 'D' and invalid Accounting Control Code (3, 5 or NULL).")
+    RETURN
+END IF
+```
 
-When changing a mfg order from Firmed to Scheduled.
+---
 
-When changing a mfg order from Scheduled to Active.
+### ✅ 2. **When Analyst is adding an output to a BOM**
 
-When creating a BOM.
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
 
-When adding a BOM output.
+ls_seg_cond = dw_bom_output.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_bom_output.GetItemNumber(row, "accounting_control_code")
 
-When adding a BOM component.
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Error", "Cannot add BOM output with GGSM SEG COND 'D' and invalid Accounting Control Code (3, 5 or NULL).")
+    RETURN
+END IF
+```
 
-When inserting a demand order, which then creates a mfg 
+---
+
+### ✅ 3. **When creating a manufacturing order and SKU has SEG COND 'D'**
+
+Place this after loading SKU details into the order creation screen.
+
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
+
+ls_seg_cond = dw_order.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_order.GetItemNumber(row, "accounting_control_code")
+
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Error", "Invalid SKU in new manufacturing order. GGSM SEG COND 'D' is not allowed with Accounting Control Code 3, 5, or NULL.")
+    RETURN
+END IF
+```
+
+---
+
+### ✅ 4. **When changing a manufacturing order from Firmed to Scheduled**
+
+Assume this is in the status transition event.
+
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
+
+ls_seg_cond = dw_order_status.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_order_status.GetItemNumber(row, "accounting_control_code")
+
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Status Change Blocked", "Cannot move to 'Scheduled'. GGSM SEG COND 'D' with Accounting Control Code 3, 5, or NULL is invalid.")
+    RETURN
+END IF
+```
+
+---
+
+### ✅ 5. **When changing a manufacturing order from Scheduled to Active**
+
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
+
+ls_seg_cond = dw_order_status.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_order_status.GetItemNumber(row, "accounting_control_code")
+
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Status Change Blocked", "Cannot move to 'Active'. GGSM SEG COND 'D' with Accounting Control Code 3, 5, or NULL is invalid.")
+    RETURN
+END IF
+```
+
+---
+
+### ✅ 6. **When creating a BOM**
+
+During the BOM creation loop or save:
+
+```powerscript
+FOR ll_row = 1 TO dw_bom.RowCount()
+    string ls_seg_cond = dw_bom.GetItemString(ll_row, "ggsm_seg_cond")
+    integer li_acc_ctrl_code = dw_bom.GetItemNumber(ll_row, "accounting_control_code")
+
+    IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+        MessageBox("BOM Creation Error", "Invalid BOM SKU found. SEG COND 'D' with invalid Accounting Control Code.")
+        RETURN
+    END IF
+NEXT
+```
+
+---
+
+### ✅ 7. **When adding a BOM output**
+
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
+
+ls_seg_cond = dw_bom_output.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_bom_output.GetItemNumber(row, "accounting_control_code")
+
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Error", "Invalid BOM output SKU. GGSM SEG COND 'D' is not permitted with ACC Control Code 3, 5, or NULL.")
+    RETURN
+END IF
+```
+
+---
+
+### ✅ 8. **When adding a BOM component**
+
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
+
+ls_seg_cond = dw_bom_comp.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_bom_comp.GetItemNumber(row, "accounting_control_code")
+
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Error", "Invalid BOM component. GGSM SEG COND 'D' with Accounting Control Code 3, 5, or NULL not allowed.")
+    RETURN
+END IF
+```
+
+---
+
+### ✅ 9. **When inserting a demand order, which creates a manufacturing order**
+
+This may be in a demand-to-order conversion function:
+
+```powerscript
+string ls_seg_cond
+integer li_acc_ctrl_code
+
+ls_seg_cond = dw_demand.GetItemString(row, "ggsm_seg_cond")
+li_acc_ctrl_code = dw_demand.GetItemNumber(row, "accounting_control_code")
+
+IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
+    MessageBox("Demand Order Error", "Cannot create mfg order from demand. SKU has invalid configuration.")
+    RETURN
+END IF
+```
+
+---
+
+Let me know if your data is coming from SQL instead of a DataWindow — I can rewrite it for query-based validation or convert this into a reusable function.
