@@ -1,0 +1,44 @@
+Here’s a concise summary of the logic:
+
+---
+
+### **Purpose**:
+
+Ensure outbound (OB) transit trailer locations only have valid warehouse handling codes.
+
+---
+
+### **Step-by-Step Logic**:
+
+1. **Condition Check**:
+
+   * Continue only if:
+
+     * `ls_storage_loc_type_code` = `"TRANSIT"` **and**
+     * `ls_storage_loc_nbr` starts with `"OB"`.
+
+2. **Delete Old Codes**:
+
+   * Remove existing entries for the location from `t_Storage_Loc_Whse_Storage_Handling_Xref`.
+   * If deletion fails, show an error message with the reason.
+
+3. **Insert Valid Codes**:
+
+   * Add the following allowed codes for the location:
+
+     * `'2'`, `'9'`, `'A'`, `'E'`, `'F'`
+   * Each row uses:
+
+     * Facility: `'HT'`
+     * Location: `:ls_storage_loc_nbr`
+   * If insert fails, display a message including the error.
+
+---
+
+### **Error Handling**:
+
+At each DB step (DELETE and INSERT), check for errors (`SQLCA.sqlcode <> 0`) and notify the user via `messagebox` if something goes wrong.
+
+---
+
+Let me know if you want the logic rewritten in PowerScript or another language.
