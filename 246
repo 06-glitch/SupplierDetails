@@ -1,124 +1,43 @@
-```powerscript
-// 1. Production adding output SKU to Manufacturing Order
-string ls_seg_cond
-integer li_acc_ctrl_code
+IF ls_storage_loc_type_code = "TRANSIT" AND Left(ls_storage_loc_nbr, 2) = "OB" THEN
+•	This checks two conditions:
+1.	The storage location is of type "TRANSIT".
+2.	Its location number starts with "OB", which identifies it as an outbound trailer.
+Only if both are true, continue to update the handling codes for this location.
+________________________________________
+DELETE FROM t_Storage_Loc_Whse_Storage_Handling_Xref WHERE Storage_Loc_Nbr = :ls_storage_loc_nbr.
+•	This removes any existing handling codes assigned to this storage location from the cross-reference table t_Storage_Loc_Whse_Storage_Handling_Xref.
+This ensures there is no duplication or conflict when inserting new codes.
+________________________________________
+IF SQLCA.sqlcode <> 0 THEN
+•	This checks if the DELETE operation failed (i.e., sqlcode is not 0).
+ls_err_msg = SQLCA.sqlerrtext
+•	Stores the error message in a string variable.
+messagebox("Usage Warning", "Cleanup of Warehouse Storage Handling Codes failed. Contact Inventory Accounting: " + ls_err_msg)
+•	Shows a message box to the user explaining that the deletion failed and includes the actual error.
+Good for debugging and alerting inventory teams if something goes wrong.
+________________________________________
+Next Step: Insert New Allowed Codes
+INSERT INTO t_Storage_Loc_Whse_Storage_H...
+You're now inserting the new set of valid handling codes (for OB trailers) into the same table.
+The format:
+SQL
+INSERT INTO t_Storage_Loc_Whse_Storage_Handling_Xref
+(MMM_Facility_Code, Storage_Loc_Nbr, Warehouse_Storage_Handling_Code)
+The values being inserted:
+SQL
+SELECT 'HT', :ls_storage_loc_nbr, '2'
+UNION SELECT 'HT', :ls_storage_loc_nbr, '9'
+UNION SELECT 'HT', :ls_storage_loc_nbr, 'A'
+UNION SELECT 'HT', :ls_storage_loc_nbr, 'E'
+UNION SELECT 'HT', :ls_storage_loc_nbr, 'F'
+•	'HT' is likely the facility code (hardcoded).
+•	:ls_storage_loc_nbr is the location number being assigned the codes.
+•	The third column ('2', '9', 'A', 'E', 'F') are the only valid handling codes for transit trailers going to the remote warehouse.
+________________________________________
+IF SQLCA.sqlcode <> 0 THEN
+•	Checks if the INSERT operation failed.
+ls_err_msg = SQLCA.sqlerrtext
+•	Gets the error message.
+messagebox("Usage Warning", "Insert of Warehouse Storage Handling Codes failed. Contact Inventory Accounting: " + ls_err_msg)
+•	Notifies the user that the insert failed and includes the error message.
 
-ls_seg_cond = dw_output.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_output.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Error", "Cannot add output SKU with GGSM SEG COND 'D' and invalid Accounting Control Code (3, 5 or NULL).")
-    RETURN
-END IF
-```
-
-```powerscript
-// 2. Analyst adding output to a BOM
-string ls_seg_cond
-integer li_acc_ctrl_code
-
-ls_seg_cond = dw_bom_output.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_bom_output.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Error", "Cannot add BOM output with GGSM SEG COND 'D' and invalid Accounting Control Code (3, 5 or NULL).")
-    RETURN
-END IF
-```
-
-```powerscript
-// 3. Creating a manufacturing order with SEG COND 'D'
-string ls_seg_cond
-integer li_acc_ctrl_code
-
-ls_seg_cond = dw_order.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_order.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Error", "Invalid SKU in new manufacturing order. GGSM SEG COND 'D' is not allowed with Accounting Control Code 3, 5, or NULL.")
-    RETURN
-END IF
-```
-
-```powerscript
-// 4. Changing manufacturing order from Firmed to Scheduled
-string ls_seg_cond
-integer li_acc_ctrl_code
-
-ls_seg_cond = dw_order_status.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_order_status.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Status Change Blocked", "Cannot move to 'Scheduled'. GGSM SEG COND 'D' with Accounting Control Code 3, 5, or NULL is invalid.")
-    RETURN
-END IF
-```
-
-```powerscript
-// 5. Changing manufacturing order from Scheduled to Active
-string ls_seg_cond
-integer li_acc_ctrl_code
-
-ls_seg_cond = dw_order_status.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_order_status.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Status Change Blocked", "Cannot move to 'Active'. GGSM SEG COND 'D' with Accounting Control Code 3, 5, or NULL is invalid.")
-    RETURN
-END IF
-```
-
-```powerscript
-// 6. Creating a BOM
-FOR ll_row = 1 TO dw_bom.RowCount()
-    string ls_seg_cond = dw_bom.GetItemString(ll_row, "ggsm_seg_cond")
-    integer li_acc_ctrl_code = dw_bom.GetItemNumber(ll_row, "accounting_control_code")
-
-    IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-        MessageBox("BOM Creation Error", "Invalid BOM SKU found. SEG COND 'D' with invalid Accounting Control Code.")
-        RETURN
-    END IF
-NEXT
-```
-
-```powerscript
-// 7. Adding a BOM output
-string ls_seg_cond
-integer li_acc_ctrl_code
-
-ls_seg_cond = dw_bom_output.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_bom_output.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Error", "Invalid BOM output SKU. GGSM SEG COND 'D' is not permitted with ACC Control Code 3, 5, or NULL.")
-    RETURN
-END IF
-```
-
-```powerscript
-// 8. Adding a BOM component
-string ls_seg_cond
-integer li_acc_ctrl_code
-
-ls_seg_cond = dw_bom_comp.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_bom_comp.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Error", "Invalid BOM component. GGSM SEG COND 'D' with Accounting Control Code 3, 5, or NULL not allowed.")
-    RETURN
-END IF
-```
-
-```powerscript
-// 9. Inserting a demand order that creates a manufacturing order
-string ls_seg_cond
-integer li_acc_ctrl_code
-
-ls_seg_cond = dw_demand.GetItemString(row, "ggsm_seg_cond")
-li_acc_ctrl_code = dw_demand.GetItemNumber(row, "accounting_control_code")
-
-IF ls_seg_cond = 'D' AND (IsNull(li_acc_ctrl_code) OR li_acc_ctrl_code = 3 OR li_acc_ctrl_code = 5) THEN
-    MessageBox("Demand Order Error", "Cannot create mfg order from demand. SKU has invalid configuration.")
-    RETURN
-END IF
-```
