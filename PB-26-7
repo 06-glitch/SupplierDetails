@@ -1,0 +1,19 @@
+NEED TO ADD NULL ==  accounting_control_code = 3 or 5 or NULL
+
+We need to create an error message within eMES when a mfg order has any sku that has a GGSM SEG COND = D and an accounting_control_code = 3 or 5.
+To many times, analyst are creating material that is not active in GGSM and that causes broker errors and holds up mfg orders from being costed.  This type of function will NOT work in SAP.
+
+This error message needs to be applied when:
+Production is adding an output sku to a mfg order.
+Analyst is adding an output to a BOM.
+When creating a mfg order and a sku has a seg code of D.
+When changing a mfg order from Firmed to Scheduled.
+When changing a mfg order from Scheduled to Active.
+When creating a BOM.
+When adding a BOM output.
+When adding a BOM component.
+When inserting a demand order, which then creates a mfg 
+
+Your eMES Development (Enhancements and Reports) request has been received.  Your request has been entered into the ITWR Application Development database for review and prioritization.  Any future work will be logged in the ITWR (see link below).
+
+Your original  IT Help ticket will be closed, but work will continue.  You will receive an
