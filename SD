@@ -1,8 +1,11 @@
-public function integer uf_validate_item_seg_cond_and_acc_code (string as_seg_cond_code, string as_acc_control_code, string as_mmm_id_nbr, ref string as_error_message); 
-if as_seg_cond_code = "D" AND (as_acc_control_code = "3" OR as_acc_control_code = "5" OR IsNull(as_acc_control_code)) then
-    as_error_message = "MES-1999|Cannot use item " + as_mmm_id_nbr + " with SEG_COND = D and ACC_CTRL_CODE = " + as_acc_control_code
-    return -1
-end if
+public function integer uf_validate_item_seg_cond_and_acc_code(string as_seg_cond_code, string as_acc_control_code, string as_mmm_id_nbr)
+    string as_error_message
 
-return 1
+    if as_seg_cond_code = "D" AND (as_acc_control_code = "3" OR as_acc_control_code = "5") then
+        as_error_message = "MES-1999|Cannot use item " + as_mmm_id_nbr + " due to SEG_COND D and ACC_CTRL 3/5"
+        messagebox("Validation Error", as_error_message)
+        return -1
+    end if
+
+    return 1
 end function
