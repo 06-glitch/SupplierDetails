@@ -1,0 +1,146 @@
+integer li_ret
+string ls_error, ls_mmm_facility_code, ls_itemmaster_columns[], ls_mmm_id_nbr, ls_table
+any la_value[]
+boolean lb_addcheckdigit = FALSE
+integer check_digit
+long		ll_Null
+
+string ls_return_column[]
+string ls_key_column[]
+string ls_key_column_type[]
+any la_return_value[]
+any la_key_column_value[]
+integer li_rc
+string ls_manufactured_ind
+
+
+ls_mmm_id_nbr = ids_datastore.GetItemString ( al_row, "mmm_id_nbr" )
+
+IF len(trim(as_mmm_id_nbr)) < 10 or ISNull ( as_mmm_id_nbr ) THEN
+	in_ReturnObject.nf_SetMessage( "MES-0005" )
+	in_ReturnObject.nf_SetReturnValue( -1 )
+ELSE
+	check_digit = f_check_digit(trim(left(as_mmm_id_nbr, 10)))
+	IF check_digit = -1 THEN
+		in_ReturnObject.nf_SetMessage( "MES-0006" )
+		in_ReturnObject.nf_SetReturnValue( -1 )	
+	ELSEIF len(trim(as_mmm_id_nbr)) = 10 then
+		as_mmm_id_nbr = trim(as_mmm_id_nbr) + string(check_digit)
+		lb_addcheckdigit = TRUE
+		in_ReturnObject.nf_SetReturnValue( 1 )
+	ELSEIF len(trim(as_mmm_id_nbr)) = 11 then
+		IF check_digit <> integer(right(as_mmm_id_nbr,1)) then
+			in_ReturnObject.nf_SetMessage( "MES-0006" )
+			in_ReturnObject.nf_SetReturnValue( -1 )	
+		ELSE
+			as_mmm_id_nbr = trim(as_mmm_id_nbr) 
+			in_ReturnObject.nf_SetReturnValue( 1 )
+		END IF
+	END IF
+END IF
+
+IF in_ReturnObject.nf_GetReturnValue() = 1 THEN
+	ls_itemmaster_columns[1] = "Item_Desc"
+	ls_itemmaster_columns[2] = "Inventory_UOM"
+	ls_itemmaster_columns[3] = "Material_Form_Code"
+	ls_itemmaster_columns[4] = "generic_item_ind"
+	ls_itemmaster_columns[5] = "item_dimension_spec_id"
+	ls_itemmaster_columns[6] = "commodity_class_code"
+	ls_itemmaster_columns[7] = "analytical_family_code"
+	ls_itemmaster_columns[8] = "item_dimension_spec_id"
+	ls_itemmaster_columns[9] = "reporting_uom"
+	ls_itemmaster_columns[10] = "common_base_uom"
+	ls_itemmaster_columns[11] = "Accounting_Control_Code"
+	ls_itemmaster_columns[12] = "CIDS_Seg_Cond_Code"
+	
+	ls_mmm_facility_code = ids_datastore.Object.mmm_facility_code[al_row]
+	IF NOT ISNull (ls_mmm_facility_code) AND Trim (ls_mmm_facility_code) <> "" THEN
+		li_ret = inv_data_access.nf_item_master_get ( ls_mmm_facility_code, as_mmm_id_nbr, &
+											ls_itemmaster_columns, la_Value, ls_error )
+		IF li_ret = -1 THEN
+			in_ReturnObject.nf_SetMessage( ls_error )
+			in_ReturnObject.nf_SetReturnValue( -1 )
+		ELSEIF UpperBound ( la_value ) = 0 THEN
+			in_ReturnObject.nf_SetMessage( 'MPI-0017' )
+			in_ReturnObject.nf_SetReturnValue( -1 )
+		ELSE
+			SetNull (ll_Null)
+			ids_datastore.SetItem ( al_row, "item_desc", la_value[1] )
+			ids_datastore.SetItem ( al_row, "inventory_uom", la_value[2] )
+			ids_datastore.SetItem ( al_row, "material_form_code", la_value[3] )
+			ids_datastore.SetItem ( al_row, "generic_item_ind", la_value[4] )
+			ids_datastore.SetItem ( al_row, "item_dimension_spec_id", la_value[5] )
+			ids_datastore.SetItem ( al_row, "commodity_class_code", la_value[6] )
+			IF IsNull (ls_mmm_id_nbr)  OR  ls_mmm_id_nbr <> as_mmm_id_nbr THEN
+				ids_datastore.SetItem ( al_row, "item_dimension_set_id", ll_Null )
+			END IF
+			IF (NOT isnull(la_value[3])) AND (trim(string(la_value[3])) <> '') THEN
+				//Get the manufactured in off of the t_material_form_code table
+				ls_table = 't_Material_Form_Code'
+				ls_return_column = {'Manufactured_Ind'}
+				ls_key_column = {'Material_Form_Code'}
+				ls_key_column_type= {'string'}
+				la_key_column_value[1] = string(la_value[3])
+				li_rc = inv_data_access.nf_get(ls_return_column, la_return_value, ls_key_column, &
+								ls_key_column_type, la_key_column_value, ls_table, ls_error)
+				IF li_rc < 0 THEN
+					//	DB Error occured
+					in_returnobject.nf_SetMessage( ls_error )
+					in_returnobject.nf_SetReturnValue( -1 )
+				ELSEIF li_rc = 0 THEN
+					//	Nothing found
+				ELSE
+					ls_manufactured_ind = String (la_return_value[1])
+				END IF
+				
+				IF ls_manufactured_ind <> 'Y' THEN
+					in_ReturnObject.nf_SetMessage( 'MES-1999|Can~'t create a BOM for item ' + string(as_mmm_id_nbr,'@@-@@@@-@@@@-@') + ', material form code must be a manufactured material form.' )
+					in_ReturnObject.nf_SetReturnValue( -1 )
+					Return in_ReturnObject
+				END IF
+			END IF
+			IF isnull(la_value[7]) THEN
+				in_ReturnObject.nf_SetMessage( 'MES-1999|Can~'t use item ' + string(as_mmm_id_nbr,'@@-@@@@-@@@@-@') + ' until it is assigned and analytical family code.' )
+				in_ReturnObject.nf_SetReturnValue( -1 )
+				Return in_ReturnObject
+			END IF
+			IF isnull(la_value[8]) THEN
+				in_ReturnObject.nf_SetMessage( 'MES-1999|Can~'t use generic item ' + string(as_mmm_id_nbr,'@@-@@@@-@@@@-@') + ' until it is assigned an item dimension spec.' )
+				in_ReturnObject.nf_SetReturnValue( -1 )
+				Return in_ReturnObject
+			END IF
+			
+			IF la_value[2] = 'NONE' THEN
+				in_ReturnObject.nf_SetMessage( 'MES-1999|Can~'t use item ' + string(as_mmm_id_nbr,'@@-@@@@-@@@@-@') + ' until it is assigned a valid Inventory UOM.' )
+				in_ReturnObject.nf_SetReturnValue( -1 )
+				Return in_ReturnObject
+			END IF
+			
+			IF la_value[9] = 'NONE' THEN
+				in_ReturnObject.nf_SetMessage( 'MES-1999|Can~'t use item ' + string(as_mmm_id_nbr,'@@-@@@@-@@@@-@') + ' until it is assigned a valid Reprting UOM.' )
+				in_ReturnObject.nf_SetReturnValue( -1 )
+				Return in_ReturnObject
+			END IF
+			
+			IF la_value[10] = 'NONE' THEN
+				in_ReturnObject.nf_SetMessage( 'MES-1999|Can~'t use item ' + string(as_mmm_id_nbr,'@@-@@@@-@@@@-@') + ' until it is assigned a valid Common Base UOM.' )
+				in_ReturnObject.nf_SetReturnValue( -1 )
+				Return in_ReturnObject
+			END IF
+			
+			IF la_value[12] = 'D' AND ( la_value[11] = '3' or la_value[11] = '5' ) THEN
+				in_ReturnObject.nf_SetMessage( 'MES-1999|Can not use item  ' +  string(as_mmm_id_nbr,'@@-@@@@-@@@@-@') + ' because it has a GGSM Seg Cond Code = ~'D~'.' )
+				in_ReturnObject.nf_SetReturnValue( -1 )
+				Return in_ReturnObject
+			END IF
+
+			in_ReturnObject.nf_SetReturnValue( 1 )
+		END IF
+	END IF
+END IF
+
+IF in_ReturnObject.nf_GetReturnValue() = 1 AND lb_AddCheckDigit THEN
+	This.Event Post ue_setmmmidnbr(al_row, as_mmm_id_nbr)
+END IF
+
+Return in_ReturnObject
