@@ -1,5 +1,10 @@
-SELECT DB_NAME() AS DatabaseName, 
-       TABLE_SCHEMA, 
-       TABLE_NAME
-FROM INFORMATION_SCHEMA.TABLES
-WHERE TABLE_NAME = 'ct_Supplier_Details';
+// ✅ Add this reusable function to a suitable object
+public function integer uf_validate_item_seg_cond_and_acc_code(string as_seg_cond_code, string as_acc_control_code, string as_mmm_id_nbr, ref string as_error_message)
+begin
+    if as_seg_cond_code = 'D' AND (as_acc_control_code = '3' OR as_acc_control_code = '5' OR IsNull(as_acc_control_code)) then
+        as_error_message = 'MES-1999|Cannot use item ' + as_mmm_id_nbr + ' with SEG_COND = D and ACC_CTRL_CODE = ' + as_acc_control_code
+        return -1
+    end if
+
+    return 1
+end
