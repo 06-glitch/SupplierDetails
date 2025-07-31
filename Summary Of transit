@@ -1,0 +1,42 @@
+Here’s a concise, point-wise explanation of what was done and how the code was refactored — in 10 points:
+
+---
+
+### ✅ **Refactor Summary (10 Points)**
+
+1. **Replaced old radio logic:**
+   Replaced `rb_transit.Checked` with three distinct radio buttons: `rb_In_Bound_Transit`, `rb_OutBound_Transit`, and `rb_Storage`.
+
+2. **Introduced `ls_transit_type`:**
+   Added a new variable to track which transit type was selected: `'INBOUND'`, `'OUTBOUND'`, or `'STORAGE'`.
+
+3. **Mapped type to internal code:**
+   Assigned `ls_storage_loc_type_code` as `'TRANSIT'` or `'TRAILBULK'` based on the selected radio button.
+
+4. **Removed trailer prefix dependency:**
+   Logic no longer checks if trailer number starts with `OB` — decisions now depend solely on radio button selection.
+
+5. **Centralized INSERT logic using `CHOOSE CASE`:**
+   Handling codes are now conditionally inserted based on `ls_transit_type` using a `CHOOSE CASE` block.
+
+6. **Handling code logic clarified:**
+
+   * `OUTBOUND` inserts 5 codes: `2, 9, A, E, F`
+   * `STORAGE` inserts 2 codes: `A, E`
+   * `INBOUND` inserts none
+
+7. **Deleted old handling codes first:**
+   Prior to inserting new codes, all existing warehouse handling codes for the trailer are deleted.
+
+8. **Preserved validation and update logic:**
+   Existing logic to check for inactive records and update `t_Storage_Location` remains untouched.
+
+9. **Preserved barcode printing logic:**
+   Barcode checkbox logic (`Parent.cbx_print_barcode.Checked`) is unchanged and triggers report if checked.
+
+10. **No redundant logic or variables left:**
+    Cleaned up all dependency on old logic paths, ensuring only necessary variables and conditions are used.
+
+---
+
+Let me know if you'd like the `INBOUND` button to insert custom codes too or if you want help modularizing the DB operations.
