@@ -69,3 +69,50 @@ WHERE bc.CIDS_Seg_Cond_Code = 'D'
   AND bc.Row_Stat_Cd = 'ACTIVE';
 
 
+SELECT DISTINCT
+    b.Mfg_Order_Nbr,
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id,
+    d.Doc_Status_Desc
+FROM t_BOM AS b
+JOIN t_Item_Master AS im
+    ON b.MMM_Id_Nbr = im.MMM_Id_Nbr
+JOIN t_Document_Status_Code AS d
+    ON b.Doc_Status_Code = d.Doc_Status_Code
+WHERE b.CIDS_Seg_Cond_Code = 'D'
+  AND b.Accounting_Control_Code = '5'
+  AND b.Doc_Status_Code IN ('E','N');  -- Released + New
+
+
+SELECT DISTINCT
+    bo.Mfg_Order_Nbr,
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id,
+    d.Doc_Status_Desc
+FROM t_BOM_Output AS bo
+JOIN t_Item_Master AS im
+    ON bo.MMM_Id_Nbr = im.MMM_Id_Nbr
+JOIN t_Document_Status_Code AS d
+    ON bo.Doc_Status_Code = d.Doc_Status_Code
+WHERE bo.CIDS_Seg_Cond_Code = 'D'
+  AND bo.Accounting_Control_Code = '5'
+  AND bo.Doc_Status_Code IN ('E','N');
+
+
+SELECT DISTINCT
+    bc.Mfg_Order_Nbr,
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id,
+    d.Doc_Status_Desc
+FROM t_BOM_Component AS bc
+JOIN t_Item_Master AS im
+    ON bc.MMM_Id_Nbr = im.MMM_Id_Nbr
+JOIN t_Document_Status_Code AS d
+    ON bc.Doc_Status_Code = d.Doc_Status_Code
+WHERE bc.CIDS_Seg_Cond_Code = 'D'
+  AND bc.Accounting_Control_Code = '5'
+  AND bc.Doc_Status_Code IN ('E','N');
+
