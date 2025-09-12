@@ -1,4 +1,4 @@
-SELECT DISTINCT
+noSELECT DISTINCT
     op.Mfg_Order_Nbr,
     im.MMM_Id_Nbr,
     im.Analytical_Family_Code,
@@ -29,3 +29,36 @@ WHERE op.Mfg_Order_Oper_Status_Code IN ('SCHEDULED', 'ACTIVE', 'FIRMED')
   AND op.CIDS_Seg_Cond_Code = 'D'
   AND op.Accounting_Control_Code = '5'
 ORDER BY op.Mfg_Order_Nbr, im.MMM_Id_Nbr;
+
+
+
+SELECT DISTINCT
+    b.BOM_Nbr,
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id
+FROM t_BOM AS b
+JOIN t_Item_Master AS im
+    ON b.MMM_Id_Nbr = im.MMM_Id_Nbr
+WHERE b.Row_Stat_Cd = 'ACTIVE';   -- adjust status filter if needed
+
+SELECT DISTINCT
+    bo.BOM_Nbr,
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id
+FROM t_BOM_Output AS bo
+JOIN t_Item_Master AS im
+    ON bo.MMM_Id_Nbr = im.MMM_Id_Nbr
+WHERE bo.Row_Stat_Cd = 'ACTIVE';  -- adjust status filter if needed
+
+SELECT DISTINCT
+    bc.BOM_Nbr,
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id
+FROM t_BOM_Component AS bc
+JOIN t_Item_Master AS im
+    ON bc.MMM_Id_Nbr = im.MMM_Id_Nbr
+WHERE bc.Row_Stat_Cd = 'ACTIVE';  -- adjust status filter if needed
+
