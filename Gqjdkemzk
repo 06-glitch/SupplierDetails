@@ -1,12 +1,31 @@
--- INPUT components per manufacturing order
 SELECT DISTINCT
     op.Mfg_Order_Nbr,
-    bc.MMM_Id_Nbr,
-    im.Analytical_Family_Code
-FROM t_mfg_order_operation      AS op
-JOIN t_Mfg_Order_BOM_Component  AS bc  ON bc.Mfg_Order_Nbr = op.Mfg_Order_Nbr
-JOIN t_Item_Master              AS im  ON im.MMM_Id_Nbr    = bc.MMM_Id_Nbr
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id
+FROM t_mfg_order_operation AS op
+JOIN t_Mfg_Order_Output AS o
+    ON op.Mfg_Order_Nbr = o.Mfg_Order_Nbr
+JOIN t_Item_Master AS im
+    ON o.MMM_Id_Nbr = im.MMM_Id_Nbr
 WHERE op.Mfg_Order_Oper_Status_Code IN ('SCHEDULED', 'ACTIVE', 'FIRMED')
   AND op.CIDS_Seg_Cond_Code = 'D'
   AND op.Accounting_Control_Code = '5'
-ORDER BY op.Mfg_Order_Nbr, bc.MMM_Id_Nbr;
+ORDER BY op.Mfg_Order_Nbr, im.MMM_Id_Nbr;
+
+
+
+SELECT DISTINCT
+    op.Mfg_Order_Nbr,
+    im.MMM_Id_Nbr,
+    im.Analytical_Family_Code,
+    im.Row_Changed_Person_Id
+FROM t_mfg_order_operation AS op
+JOIN t_Mfg_Order_BOM_Component AS bc
+    ON op.Mfg_Order_Nbr = bc.Mfg_Order_Nbr
+JOIN t_Item_Master AS im
+    ON bc.MMM_Id_Nbr = im.MMM_Id_Nbr
+WHERE op.Mfg_Order_Oper_Status_Code IN ('SCHEDULED', 'ACTIVE', 'FIRMED')
+  AND op.CIDS_Seg_Cond_Code = 'D'
+  AND op.Accounting_Control_Code = '5'
+ORDER BY op.Mfg_Order_Nbr, im.MMM_Id_Nbr;
