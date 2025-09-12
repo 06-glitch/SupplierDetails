@@ -1,13 +1,12 @@
- SELECT 
-    t_Item_Master.Row_Changed_Person_Id
-FROM t_mfg_order_operation
-JOIN t_Mfg_Order_Output 
-    ON t_mfg_order_operation.Mfg_Order_Nbr = t_Mfg_Order_Output.Mfg_Order_Nbr
-JOIN t_Mfg_Order_BOM_Component 
-    ON t_mfg_order_operation.Mfg_Order_Nbr = t_Mfg_Order_BOM_Component.Mfg_Order_Nbr
-JOIN t_Item_Master 
-    ON t_Mfg_Order_BOM_Component.Item_Id = t_Item_Master.Item_Id   -- adjust join key
-WHERE 
-    Mfg_Order_Oper_Status_Code = 'SCHEDULED'
-    AND CIDS_Se = '...' 
-    AND Accounting_Control_Code = '5';
+-- INPUT components per manufacturing order
+SELECT DISTINCT
+    op.Mfg_Order_Nbr,
+    bc.MMM_Id_Nbr,
+    im.Analytical_Family_Code
+FROM t_mfg_order_operation      AS op
+JOIN t_Mfg_Order_BOM_Component  AS bc  ON bc.Mfg_Order_Nbr = op.Mfg_Order_Nbr
+JOIN t_Item_Master              AS im  ON im.MMM_Id_Nbr    = bc.MMM_Id_Nbr
+WHERE op.Mfg_Order_Oper_Status_Code IN ('SCHEDULED', 'ACTIVE', 'FIRMED')
+  AND op.CIDS_Seg_Cond_Code = 'D'
+  AND op.Accounting_Control_Code = '5'
+ORDER BY op.Mfg_Order_Nbr, bc.MMM_Id_Nbr;
