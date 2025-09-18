@@ -1,0 +1,30 @@
+Thanks for sharing the screenshot — that helps clarify the issue.
+
+From Gary’s note, it looks like the **`d_oi_bom_loads_allocated` datawindow** has the **“Allow Updates”** option disabled, which means loads can’t be deallocated anymore. This seems to be a direct result of the recent changes.
+
+Here’s a refined email draft you can send to Matt that includes this specific detail without pointing fingers:
+
+---
+
+**Subject:** Issue in Production – Load Deallocation Not Working
+
+Hi Matt,
+
+I wanted to bring to your attention an issue we are seeing in production. The `d_oi_bom_loads_allocated` datawindow is no longer allowing updates, which is preventing loads from being deallocated.
+
+This behavior started after the latest set of changes was moved from dev to production. Since the person who worked on those updates is currently out, I thought it best to flag this so we can align on the next steps.
+
+Could you advise on how you’d like us to proceed? Specifically, whether we should:
+
+* Investigate and re-enable updates on the datawindow,
+* Consider a rollback if necessary, or
+* Handle this through the appropriate change process with paperwork/records.
+
+I’ll continue gathering more details, but I wanted to loop you in quickly, especially in Jesse’s absence.
+
+Thanks,
+\[Your Name]
+
+---
+
+Would you like me to also draft a **short Teams/Slack message** version of this that you can quickly drop to Matt before sending the formal email?
