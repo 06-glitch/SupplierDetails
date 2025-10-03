@@ -29,3 +29,15 @@ WHERE p.name LIKE 'cp%'                                   -- name starts with cp
       OR m.definition COLLATE Latin1_General_CI_AS LIKE '%form_11%'
       )
 ORDER BY p.name;
+
+
+
+
+USE PMCS;
+GO
+
+SELECT OBJECT_SCHEMA_NAME(p.object_id) + '.' + p.name AS ProcedureName
+FROM sys.procedures p
+JOIN sys.sql_modules m ON p.object_id = m.object_id
+WHERE m.definition COLLATE Latin1_General_CI_AS LIKE '%P43%'
+ORDER BY p.name;
