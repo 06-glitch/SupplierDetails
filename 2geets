@@ -1,7 +1,10 @@
-SELECT OBJECT_NAME(object_id) AS ProcedureName,
-       definition
-FROM sys.sql_modules
-WHERE definition LIKE '%RDOCK%'
-   OR definition LIKE '%2GEETS%'
-   OR definition LIKE '%GIDOCK%'
-   OR definition LIKE '%SOPRG1%';
+-- Likely tables/views for KI Load Ticket + location fields
+SELECT o.name, o.type_desc
+FROM sys.objects o
+WHERE o.name LIKE '%KI%Load%Ticket%' OR o.name LIKE '%Load%Ticket%KI%';
+
+-- Tables with a location-ish column
+SELECT t.name AS TableName, c.name AS ColumnName
+FROM sys.tables t
+JOIN sys.columns c ON c.object_id = t.object_id
+WHERE t.name LIKE '%KI%' AND c.name IN ('whse','whse_loc','warehouse','location','loc');
