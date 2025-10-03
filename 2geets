@@ -1,0 +1,7 @@
+SELECT OBJECT_NAME(object_id) AS ProcedureName,
+       definition
+FROM sys.sql_modules
+WHERE definition LIKE '%RDOCK%'
+   OR definition LIKE '%2GEETS%'
+   OR definition LIKE '%GIDOCK%'
+   OR definition LIKE '%SOPRG1%';
