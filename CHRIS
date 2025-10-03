@@ -1,0 +1,14 @@
+USE PMCS;
+GO
+
+SELECT OBJECT_NAME(sm.object_id) AS ProcedureName,
+       sm.definition
+FROM sys.sql_modules sm
+JOIN sys.objects so ON sm.object_id = so.object_id
+WHERE so.type = 'P'  -- P = SQL Stored Procedure
+AND (
+       sm.definition LIKE '%Form 11%'
+    OR sm.definition LIKE '%Material%'
+    OR sm.definition LIKE '%Load%'
+    OR sm.definition LIKE '%Location%'
+    );
