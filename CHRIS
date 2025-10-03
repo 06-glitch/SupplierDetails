@@ -12,3 +12,20 @@ AND (
     OR sm.definition LIKE '%Load%'
     OR sm.definition LIKE '%Location%'
     );
+
+
+USE PMCS;
+GO
+
+SELECT OBJECT_SCHEMA_NAME(p.object_id) + '.' + p.name AS ProcedureName
+FROM sys.procedures p
+JOIN sys.sql_modules m ON p.object_id = m.object_id
+WHERE p.name LIKE 'cp%'                                   -- name starts with cp
+  AND (
+         m.definition COLLATE Latin1_General_CI_AS LIKE '%form 11%'
+      OR m.definition COLLATE Latin1_General_CI_AS LIKE '%form11%'
+      OR m.definition COLLATE Latin1_General_CI_AS LIKE '%material form 11%'
+      OR m.definition COLLATE Latin1_General_CI_AS LIKE '%mf 11%'
+      OR m.definition COLLATE Latin1_General_CI_AS LIKE '%form_11%'
+      )
+ORDER BY p.name;
