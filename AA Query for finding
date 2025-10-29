@@ -1,0 +1,11 @@
+USE SSISDB;
+GO
+SELECT f.folder_name,
+       p.project_name,
+       pkg.name AS package_name,
+       pkg.package_id,
+       pkg.description
+FROM internal.packages pkg
+JOIN internal.projects p ON pkg.project_id = p.project_id
+JOIN internal.folders f ON p.folder_id = f.folder_id
+WHERE pkg.name LIKE '%QadnH%' OR pkg.description LIKE '%Daily%';
