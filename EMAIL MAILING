@@ -1,0 +1,5 @@
+-- 1) What instance are we on?
+SELECT @@SERVERNAME AS server_name, @@VERSION AS version_info;
+
+-- 2) Is SQL Server Agent running on THIS box?
+EXEC master.dbo.xp_servicecontrol 'QUERYSTATE', 'SQLSERVERAGENT';
