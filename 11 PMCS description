@@ -1,0 +1,25 @@
+BEGIN TRANSACTION;
+
+-- Check existing descriptions first
+SELECT item, item_desc
+FROM dbo.t_item_master
+WHERE item IN ('44006804957', '44006805004');
+
+-- Update item descriptions as per the request
+UPDATE dbo.t_item_master
+SET item_desc = 'INPR RY 60+ 05 FORM 5 x 7/8 3M1182C'
+WHERE item = '44006804957';
+
+UPDATE dbo.t_item_master
+SET item_desc = 'INPR RY 80+ 05 5 x 7/8 3M1182C'
+WHERE item = '44006805004';
+
+-- Verify the changes
+SELECT item, item_desc
+FROM dbo.t_item_master
+WHERE item IN ('44006804957', '44006805004');
+
+-- Commit after verifying results
+COMMIT TRANSACTION;
+-- If something is wrong, use:
+-- ROLLBACK TRANSACTION;
