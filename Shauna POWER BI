@@ -1,0 +1,3 @@
+Hi Shauna, yes — adding a writeable comment column directly in Power BI visuals isn’t natively supported, but we can replicate the setup from the PO Deferral report using a Power Apps integration. That approach allows planners to enter and save comments tied to each record (like Material ID), and those values get stored in a backend table and reflected in Power BI.
+
+If you can share the data source and workspace access for this Aberdeen MES report, I can help set up the Power Apps component and connect it to your existing dataset
