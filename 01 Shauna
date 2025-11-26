@@ -1,0 +1,146 @@
+Here is the full **DIY document content**, clean, structured, and *copy-paste ready*, **exactly as it appears in the Word doc** — no extra commentary.
+
+---
+
+# **POWER BI WRITEABLE COMMENTS – DIY GUIDE**
+
+This document provides a clear, step-by-step process to add a write-enabled **“Comments”** column to the **Aberdeen MES Inventory Velocity** report, replicating the functionality of the **PO Deferral Tool**.
+
+---
+
+## **PURPOSE**
+
+Enable planners to enter and save comments on each MES Inventory row **without losing data** when the underlying Excel file refreshes.
+
+---
+
+## **OVERVIEW**
+
+Power BI visuals cannot be edited directly.
+To enable writeback, we will:
+
+1. Create a backend **Comments table** (SharePoint list recommended).
+2. Connect both MES Inventory data (Excel from network drive) and Comments table into Power BI.
+3. Create a **relationship** on the key (HU / Handling Unit).
+4. Embed a **Power Apps visual** inside the Power BI report to write comments.
+5. Display saved comments inside the main MES table.
+
+---
+
+## **STEP 1 – CREATE THE COMMENTS TABLE**
+
+Create a **SharePoint List** with the following columns:
+
+* **HU** – Single Line Text (Primary Key)
+* **Comment** – Multiple Line Text
+* **PlannerName** – Single Line Text (Optional)
+* **Timestamp** – Date/Time (Optional)
+
+This list acts as permanent storage and **will NOT be overwritten** when the MES Excel file refreshes.
+
+---
+
+## **STEP 2 – CONNECT COMMENTS TABLE INTO POWER BI**
+
+1. Open **Power BI Desktop**
+2. Click **Get Data**
+3. Choose **SharePoint Online List**
+4. Connect to the new Comments list
+5. Load the list into the data model
+6. Go to **Model View**
+7. Create a relationship:
+
+```
+MES Table.HU  →  Comments.HU
+Cardinality: One-to-Many
+Cross Filter Direction: Single
+```
+
+---
+
+## **STEP 3 – ADD A POWER APPS WRITEBACK FORM**
+
+1. Go to the **MES Inventory Velocity** report page.
+
+2. Click **Insert → Power Apps visual**.
+
+3. Drag these fields into the Power Apps visual field well:
+
+   * **HU**
+   * **Material**
+   * Any identifiers planners need for context
+
+4. Select **Create New App**.
+
+5. Power Apps will open and automatically generate a basic app.
+
+Inside Power Apps:
+
+6. Add a **Text Input** box → name it:
+   `CommentInput`
+
+7. Add a **Button** → label it **SAVE**
+
+8. Set the **OnSelect** property of the SAVE button to:
+
+```
+Patch(
+    Comments,
+    Defaults(Comments),
+    {
+        HU: ThisItem.HU,
+        Comment: CommentInput.Text,
+        PlannerName: User().FullName,
+        Timestamp: Now()
+    }
+)
+```
+
+9. Click **Save** and **Publish** in Power Apps.
+10. Return to Power BI – the embedded app will refresh automatically.
+
+---
+
+## **STEP 4 – DISPLAY COMMENTS IN THE POWER BI TABLE**
+
+1. Select the **main MES Inventory** table visual.
+2. Add the field **Comments.Comment** to the table.
+3. The comments will now appear next to the MES data for each HU.
+
+---
+
+## **STEP 5 – REFRESH BEHAVIOR**
+
+* The MES Excel file (on the network drive) **refreshes daily**.
+* The SharePoint Comments table **remains untouched**.
+* The HU → HU relationship ensures comments always stay attached to correct rows.
+
+---
+
+## **STEP 6 – VALIDATION CHECK**
+
+Test with a single row:
+
+1. Select a row in Power Apps.
+2. Enter a comment.
+3. Click **SAVE**.
+4. Refresh Power BI.
+5. Confirm the comment appears next to the HU and persists through refresh.
+
+---
+
+## **STEP 7 – GO-LIVE CHECKLIST**
+
+* SharePoint list created & accessible
+* Comments table connected in Power BI
+* HU relationship correctly set
+* Power Apps writeback works
+* Comments visible after refresh
+
+---
+
+## **END OF DOCUMENT**
+
+---
+
+If you want, I can also format this in a **one-page professional template** for Shauna.
