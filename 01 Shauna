@@ -1,39 +1,98 @@
-Here is the full **DIY document content**, clean, structured, and *copy-paste ready*, **exactly as it appears in the Word doc** — no extra commentary.
+Here is a **clean, professional, copy-paste-ready step-by-step guide** you can read to Shauna on the call.
+No fluff. No explanations. Only steps.
 
 ---
 
-# **POWER BI WRITEABLE COMMENTS – DIY GUIDE**
+# **📘 STEP-BY-STEP GUIDE FOR SHAUNA**
 
-This document provides a clear, step-by-step process to add a write-enabled **“Comments”** column to the **Aberdeen MES Inventory Velocity** report, replicating the functionality of the **PO Deferral Tool**.
-
----
-
-## **PURPOSE**
-
-Enable planners to enter and save comments on each MES Inventory row **without losing data** when the underlying Excel file refreshes.
+### **Fixing the “Not all data was successfully written to the registry” error**
 
 ---
 
-## **OVERVIEW**
+## ✅ **Step 1 — Copy the .reg file locally**
 
-Power BI visuals cannot be edited directly.
-To enable writeback, we will:
+1. Go to the W:\apps\ODBC folder.
+2. Copy this file to your computer:
 
-1. Create a backend **Comments table** (SharePoint list recommended).
-2. Connect both MES Inventory data (Excel from network drive) and Comments table into Power BI.
-3. Create a **relationship** on the key (HU / Handling Unit).
-4. Embed a **Power Apps visual** inside the Power BI report to write comments.
-5. Display saved comments inside the main MES table.
+   * **HT Live eMES_SQL_Registry32.reg**
+3. Paste it into:
+
+   ```
+   C:\Temp\
+   ```
 
 ---
 
-## **STEP 1 – CREATE THE COMMENTS TABLE**
+## ✅ **Step 2 — Open the correct version of Registry Editor (32-bit)**
 
-Create a **SharePoint List** with the following columns:
+1. Press **Windows Key + R**
+2. Type:
 
-* **HU** – Single Line Text (Primary Key)
-* **Comment** – Multiple Line Text
-* **PlannerName** – Single Line Text (Optional)
+   ```
+   C:\Windows\SysWOW64\regedit.exe
+   ```
+3. Press **Enter**
+4. If prompted, click **Yes** to run as Administrator.
+
+---
+
+## ✅ **Step 3 — Give yourself permissions on the ODBC registry folder**
+
+1. In regedit, navigate to:
+
+   ```
+   HKEY_LOCAL_MACHINE\SOFTWARE\WOW6432Node\ODBC\ODBC.INI
+   ```
+
+2. Right-click **ODBC.INI** → **Permissions**
+
+3. Click **Advanced**
+
+4. At the top, click **Change** next to Owner
+
+5. Type **Administrators** → click **Check Names** → click **OK**
+
+6. Check the box:
+   ✔ *Replace owner on subcontainers and objects*
+
+7. Click **Apply**
+
+8. Go back to the Permissions window
+
+9. Select **Administrators**
+
+10. Check **Full Control**
+
+11. Click **Apply → OK**
+
+---
+
+## ✅ **Step 4 — Import the registry file**
+
+1. In the same regedit window:
+
+   * Click **File → Import**
+2. Browse to:
+
+   ```
+   C:\Temp\HT Live eMES_SQL_Registry32.reg
+   ```
+3. Click **Open**
+
+You should **NOT** see any error now.
+
+---
+
+## ✅ **Step 5 — Close regedit**
+
+Once imported successfully, close regedit.
+Your ODBC settings are now installed.
+
+---
+
+If you want, I can also provide:
+✔ a version formatted as a **Word doc**
+✔ or a version written in a **checklist format** for her screen-share.
 * **Timestamp** – Date/Time (Optional)
 
 This list acts as permanent storage and **will NOT be overwritten** when the MES Excel file refreshes.
